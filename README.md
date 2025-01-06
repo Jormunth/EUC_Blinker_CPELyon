@@ -1,8 +1,6 @@
 # EUC's Blinkers
 *DELEULE Alix and Delzenne-Zamparutti Tinaël*
 
-[Lien Trello](https://trello.com/b/QIKhqKdH/roveblinkerdeleuledelzenne-zamparutti)
-
 We will first develop 2 different solutions in parallel to have POC:
 - TOF
 - MEMS
