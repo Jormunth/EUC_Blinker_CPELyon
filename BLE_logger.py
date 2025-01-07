@@ -4,7 +4,7 @@ import asyncio
 from bleak import BleakClient
 
 # Adresse MAC de votre ESP32 (à remplacer par l'adresse de votre périphérique)
-DEVICE_ADDRESS = "24:62:AB:F4:F4:7E"  # Exemple : "24:6F:28:AE:4C:08"
+DEVICE_ADDRESS = "24:62:AB:F4:F4:7E"
 
 # UUID du service et de la caractéristique BLE
 SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"  # Remplacez si nécessaire
