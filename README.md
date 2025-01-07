@@ -35,7 +35,8 @@ Instalation des drivers du TOF VL53L8 (dossier dans docs projet)
 Ajouter les .h et .c de VL53L8CX_ULD_API et les platform.h/platform.c
 
 07/01
-COnnecter le TOF au PC :     
+
+Connecter le TOF au PC :     
 - EXT_5V <---> 5V
 - EXT 1V8 NC
 - EXT_3.3V NC
@@ -59,6 +60,7 @@ cat /dev/ttyACM0
   - Parity: None
   - Stop Bits: 1
 
+Valeur capteur TOF : 
 
 
 TODO : 
