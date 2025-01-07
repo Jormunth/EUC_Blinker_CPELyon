@@ -2,6 +2,8 @@ import tkinter as tk
 from tkinter import scrolledtext, ttk
 import asyncio
 from bleak import BleakClient
+import re
+from bleak import BleakScanner
 import json
 import csv
 import os
@@ -64,11 +66,8 @@ async def log_ble_data():
             line = data.decode("utf-8").strip()
             print(f"Données reçues : {line}")
             try:
-                data = line.split(",")
-                if len(data) == 6:
-                    timestamp = datetime.now().isoformat()  # Horodatage
-                    archive_data(timestamp, data)
-                    update_grid(data)
+                archive_data(data)
+                update_grid(data)
             except (IndexError, ValueError):
                 print("Erreur de parsing :", line)
 
@@ -79,6 +78,20 @@ async def log_ble_data():
         # Attente pour recevoir les notifications
         while True:
             await asyncio.sleep(1)
+
+async def scan_ble_devices():
+    scan_text_area.delete(1.0, tk.END)  # Effacer le contenu précédent de la text_area du scan
+    scan_text_area.insert(tk.END, "Scan des périphériques BLE en cours...\n")  # Ajouter un message initial
+    devices = await BleakScanner.discover()
+    if not devices:
+        scan_text_area.insert(tk.END, "Aucun périphérique détecté.\n")
+    else:
+        scan_text_area.insert(tk.END, f"{len(devices)} périphérique(s) détecté(s) :\n")
+        for device in devices:
+            name = device.name
+            if "ESP32_EUC" in name:  # Vérifie s'il contient "ESP32_EUC"
+                scan_text_area.insert(tk.END, f"Nom : {name}, Adresse MAC : {device.address}\n")
+
 
 ##################################
 # Archivage // Grid
@@ -183,12 +196,20 @@ device_address_entry.pack(side=tk.LEFT, padx=10)
 connect_button = tk.Button(settings_frame, text="Connect", command=lambda: asyncio.run(log_ble_data()))
 connect_button.pack(side=tk.LEFT, padx=10)
 
+# Scan button
+scan_button = tk.Button(settings_frame, text="Scan", command=lambda: asyncio.run(scan_ble_devices()))
+scan_button.pack(side=tk.LEFT, padx=10)
+
 # Stop button
 stop_button = tk.Button(settings_frame, text="Arrêt", command=root.destroy)  # Commande pour fermer la fenêtre
 stop_button.pack(side=tk.LEFT, padx=10)
 
+# Créer une nouvelle zone de texte pour les résultats du scan
+scan_text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, height=4)
+scan_text_area.pack(pady=10, fill=tk.BOTH, expand=True)
+
 # Create the resizable text area
-text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD)
+text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD,  height=7)
 text_area.pack(pady=10, fill=tk.BOTH, expand=True)
 
 # Cadre pour la grille 8x8
