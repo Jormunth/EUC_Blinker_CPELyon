@@ -40,8 +40,9 @@ async def log_ble_data():
         # Ouvrir le fichier CSV
         with open(OUTPUT_FILE, mode="w", newline="") as file:
             writer = csv.writer(file)
-            writer.writerow(["Timestamp", "Accel_X (g)", "Accel_Y (g)", "Accel_Z (g)", 
-                             "Gyro_X (°/s)", "Gyro_Y (°/s)", "Gyro_Z (°/s)"])
+            writer.writerow(["# IKS01A3 "])
+            writer.writerow([""])
+            writer.writerow(["time[us],acc_x[mg],acc_y[mg],acc_z[mg],gyro_x[mdps],gyro_y[mdps],gyro_z[mdps]"])
 
             try:
                 # Fonction pour traiter les notifications BLE
