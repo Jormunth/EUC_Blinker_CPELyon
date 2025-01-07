@@ -60,12 +60,15 @@ cat /dev/ttyACM0
   - Parity: None
   - Stop Bits: 1
 
-Valeur capteur TOF : 
+Valeur capteur TOF : capteur_valor.png
+
+Tof serial Gui fonctionelle
+
 
 
 TODO : 
 
-- faire le GUI 
+- TOF_ble_gui
 - calibrer et detecter un semblant de gauche/droite
 - LED
 - Intégration avec led 

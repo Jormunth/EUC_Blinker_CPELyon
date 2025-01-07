@@ -1,7 +1,7 @@
 import tkinter as tk
 from tkinter import scrolledtext, ttk
-import serial
-import threading
+import asyncio
+from bleak import BleakClient
 import json
 import csv
 import os
@@ -29,59 +29,56 @@ if not os.path.exists(archive_folder_csv):
 archive_filename_csv = os.path.join(archive_folder_csv, f"archive_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
 
 ##################################
-# Serial
+# BLE Configuration
 ##################################
+SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"  # Remplacez si nécessaire
+CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8"  # Remplacez si nécessaire
 
-def connect_serial():
-    global ser
-    try:
-        port = port_combobox.get()
-        baudrate = int(baudrate_combobox.get())
-        ser = serial.Serial(port, baudrate, timeout=1)
-        start_reading()
-        connect_button.config(state=tk.DISABLED)
-        disconnect_button.config(state=tk.NORMAL)
-    except serial.SerialException as e:
-        text_area.insert(tk.END, f"Error: {e}\n")
-        text_area.see(tk.END)
+async def log_ble_data():
+    DEVICE_ADDRESS = device_address_entry.get()  # Récupérer l'adresse du périphérique saisie
+    async with BleakClient(DEVICE_ADDRESS) as client:
+        print(f"Connexion au périphérique {DEVICE_ADDRESS}")
+
+        # Vérifiez les services et caractéristiques du périphérique
+        services = await client.get_services()
+        print("Services et caractéristiques :")
+        for service in services:
+            print(f"Service UUID: {service.uuid}")
+            for char in service.characteristics:
+                print(f"\tCaractéristique UUID: {char.uuid}")
         
-def start_reading():
-    global read_thread
-    read_thread = threading.Thread(target=read_data, daemon=True)
-    read_thread.start()
+        # Vérifiez si la caractéristique souhaitée existe
+        characteristic_found = False
+        for service in services:
+            for char in service.characteristics:
+                if char.uuid == CHARACTERISTIC_UUID:
+                    characteristic_found = True
+                    break
+        
+        if not characteristic_found:
+            print("Caractéristique non trouvée.")
+            return
 
+        # Fonction pour traiter les notifications BLE
+        def handle_notification(sender, data):
+            line = data.decode("utf-8").strip()
+            print(f"Données reçues : {line}")
+            try:
+                data = line.split(",")
+                if len(data) == 6:
+                    timestamp = datetime.now().isoformat()  # Horodatage
+                    archive_data(timestamp, data)
+                    update_grid(data)
+            except (IndexError, ValueError):
+                print("Erreur de parsing :", line)
 
-
-def disconnect_serial():
-    global ser
-    if ser:
-        ser.close()
-        ser = None
-        connect_button.config(state=tk.NORMAL)
-        disconnect_button.config(state=tk.DISABLED)
-        text_area.insert(tk.END, "Disconnected from serial port.\n")
-        text_area.see(tk.END)
-
-def send_data():
-    data = entry.get()
-    if data:
-        ser.write(data.encode('utf-8'))  # Send data
-        entry.delete(0, tk.END)  # Clear the input field
-
-def read_data():
-    while True:
-        if ser.in_waiting > 0:
-            received = ser.readline().decode('utf-8').strip()  # Read and decode
-            # Efface la zone de texte avant d'afficher le nouveau message
-            text_area.delete(1.0, tk.END)
-            text_area.insert(tk.END, f"{received}\n")
-            text_area.see(tk.END)  # Auto-scroll to the bottom
-
-            #Mise à jour grille
-            update_grid(received)
-
-            # Archiver les données
-            archive_data(received)
+        # Ouvrir les notifications
+        await client.start_notify(CHARACTERISTIC_UUID, handle_notification)
+        print("Notifications activées. Appuyez sur Ctrl+C pour arrêter.")
+        
+        # Attente pour recevoir les notifications
+        while True:
+            await asyncio.sleep(1)
 
 ##################################
 # Archivage // Grid
@@ -169,45 +166,26 @@ def get_color(value):
 
 # Create the main Tkinter window
 root = tk.Tk()
-root.title("Serial Interface")
+root.title("TOF BLE GUI")
 
 # Create the top frame for connection settings
 settings_frame = tk.Frame(root)
 settings_frame.pack(pady=10, fill=tk.X)
 
-# Port selection
-tk.Label(settings_frame, text="Port:").pack(side=tk.LEFT, padx=5)
-port_combobox = ttk.Combobox(settings_frame, values=["/dev/ttyACM0", "/dev/ttyUSB0", "COM3"], width=15)
-port_combobox.set("/dev/ttyACM0")
-port_combobox.pack(side=tk.LEFT, padx=5)
+# Champ adresse du périphérique
+device_address_label = tk.Label(settings_frame, text="Device Address:")
+device_address_label.pack(side=tk.LEFT, padx=10)
 
-# Baudrate selection
-tk.Label(settings_frame, text="Baudrate:").pack(side=tk.LEFT, padx=5)
-baudrate_combobox = ttk.Combobox(settings_frame, values=["9600", "19200", "38400", "115200", "460800"], width=10)
-baudrate_combobox.set("460800")
-baudrate_combobox.pack(side=tk.LEFT, padx=5)
+device_address_entry = tk.Entry(settings_frame, width=20)
+device_address_entry.pack(side=tk.LEFT, padx=10)
 
 # Connect button
-connect_button = tk.Button(settings_frame, text="Connect", command=connect_serial)
+connect_button = tk.Button(settings_frame, text="Connect", command=lambda: asyncio.run(log_ble_data()))
 connect_button.pack(side=tk.LEFT, padx=10)
-
-# Disconnect button
-disconnect_button = tk.Button(settings_frame, text="Disconnect", command=disconnect_serial, state=tk.DISABLED)
-disconnect_button.pack(side=tk.LEFT, padx=10)
 
 # Stop button
 stop_button = tk.Button(settings_frame, text="Arrêt", command=root.destroy)  # Commande pour fermer la fenêtre
 stop_button.pack(side=tk.LEFT, padx=10)
-
-# Create widgets for sending data
-frame = tk.Frame(root)
-frame.pack(pady=10, fill=tk.X)
-
-entry = tk.Entry(frame, width=30)
-entry.pack(side=tk.LEFT, padx=5, fill=tk.X, expand=True)
-
-send_button = tk.Button(frame, text="Send", command=send_data)
-send_button.pack(side=tk.LEFT)
 
 # Create the resizable text area
 text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD)
@@ -230,6 +208,3 @@ for row in range(8):
 # Run the Tkinter event loop
 root.mainloop()
 
-# Close the serial connection when the program exits
-if 'ser' in globals() and ser:
-    ser.close()
