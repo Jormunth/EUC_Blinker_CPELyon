@@ -3,16 +3,25 @@ from tkinter import scrolledtext, ttk
 import serial
 import threading
 import json
+import csv
 import os
 from datetime import datetime
 
 # Créer un dossier pour les archives si inexistant
-archive_folder = "Archives_json"
-if not os.path.exists(archive_folder):
-    os.makedirs(archive_folder)
+archive_folder_json = "Archives_json"
+if not os.path.exists(archive_folder_json):
+    os.makedirs(archive_folder_json)
 
 # Générer un nom de fichier unique pour cette exécution
-archive_filename = os.path.join(archive_folder, f"archive_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+archive_filename_json = os.path.join(archive_folder_json, f"archive_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
+
+# Créer un dossier pour les archives si inexistant
+archive_folder_csv = "Archives_csv"
+if not os.path.exists(archive_folder_csv):
+    os.makedirs(archive_folder_csv)
+
+# Générer un nom de fichier unique pour cette exécution
+archive_filename_csv = os.path.join(archive_folder_csv, f"archive_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
 
 def send_data():
     data = entry.get()
@@ -35,17 +44,19 @@ def read_data():
             # Archiver les données
             archive_data(received)
 
+import csv
+
 def archive_data(data):
     """
-    Archive les données reçues dans un fichier JSON avec un timestamp.
+    Archive les données reçues dans un fichier JSON et un fichier CSV avec un horodatage.
     :param data: Les données reçues sous forme de chaîne.
     """
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")  # Format de l'horodatage
+    timestamp = datetime.now().isoformat()  # Format de l'horodatage
     archive_entry = {"timestamp": timestamp, "data": data}  # Structure des données
 
-    # Charger ou initialiser une nouvelle archive
+    # Sauvegarde JSON
     try:
-        with open(archive_filename, "r") as file:
+        with open(archive_filename_json, "r") as file:
             archive = json.load(file)  # Charger les données existantes
     except (FileNotFoundError, json.JSONDecodeError):
         archive = []  # Initialiser une nouvelle liste pour cette exécution
@@ -54,8 +65,16 @@ def archive_data(data):
     archive.append(archive_entry)
 
     # Écrire les données mises à jour dans le fichier JSON
-    with open(archive_filename, "w") as file:
+    with open(archive_filename_json, "w") as file:
         json.dump(archive, file, indent=4)  # Sauvegarde avec indentation pour lisibilité
+
+    # Sauvegarde CSV
+    file_exists = os.path.isfile(archive_filename_csv)  # Vérifie si le fichier CSV existe déjà
+    with open(archive_filename_csv, "a", newline="") as csvfile:
+        csv_writer = csv.writer(csvfile)
+        if not file_exists:
+            csv_writer.writerow(["Timestamp", "Data"])  # Écrire l'en-tête uniquement si le fichier est nouveau
+        csv_writer.writerow([timestamp]+ data.split(','))  # Ajouter une ligne de données
 
 
 def update_grid(data):
@@ -63,6 +82,7 @@ def update_grid(data):
     Met à jour la grille 8x8 avec les valeurs extraites des données.
     :param data: Chaîne de caractères sous forme "-2:4,1:4,..."
     """
+
     try:
         # Transformer les données en une liste d'entiers
         values = [item.split(':')[0] for item in data.split(',') if ':' in item]
@@ -70,19 +90,37 @@ def update_grid(data):
         for i, label in enumerate(sum(grid_labels, [])):  # Transforme la grille en liste 1D
             if i < len(values):
                 label.config(text=values[i])  # Mettre à jour le texte
+                print("test1\n")
                 # Couleur basée sur la valeur
                 if values[i] == 'X':
                     label.config(bg="grey")
-                if int(values[i]) == 0:
-                    label.config(bg="white")
-                elif int(values[i]) > 0:
-                    label.config(bg="green")
                 else:
-                    label.config(bg="red")
+                    print("test2\n")
+                    print(values[i])
+                    label.config(bg=get_color(values[i]))
             else:
                 label.config(text="", bg="white")  # Vider les cases restantes
     except Exception as e:
-        text_area.insert(tk.END, f"Erreur lors de la mise à jour de la grille : {e}\n")
+        print("Erreur lors de la mise à jour de la grille : {e}\n")
+
+def get_color(value):
+    """
+    Génère une couleur RGB correspondant à un gradient allant de rouge (0) à vert (4000).
+    :param value: La valeur entre 0 et 4000.
+    :return: Une couleur hexadécimale (#RRGGBB).
+    """
+    try:
+        # Normalisation de la valeur entre 0 et 1
+        normalized = max(0, min(int(value) / 4000, 1))
+        # Calcul des composantes rouge et verte pour le gradient
+        red = int((1 - normalized) * 255)  # Diminue le rouge
+        green = int(normalized * 255)  # Augmente le vert
+        # Retourne une couleur hexadécimale (#RRGGBB)
+        return f"#{red:02x}{green:02x}00"
+    except Exception as e:
+        print(f"Erreur dans get_color: {e}")
+        return "#ffffff"  # Retourne blanc en cas d'erreur
+
 
 
 def start_reading():
