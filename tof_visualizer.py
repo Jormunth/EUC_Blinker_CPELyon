@@ -6,6 +6,8 @@ from PySide6.QtDataVisualization import (
     Q3DSurface, QSurfaceDataProxy, QSurface3DSeries,
     QAbstract3DGraph, QValue3DAxis)
 from PySide6.QtGui import QVector3D
+from PySide6.QtGui import QWindow
+from PySide6.QtWidgets import QWidget, QVBoxLayout
 
 class Serial3DPlot(QMainWindow):
     def __init__(self, serial_port, baud_rate, parent=None):
@@ -29,7 +31,15 @@ class Serial3DPlot(QMainWindow):
         self.graph.axisY().setTitleVisible(True)
         self.graph.axisZ().setTitleVisible(True)
 
-        self.setCentralWidget(self.graph)
+        # Embed the Q3DSurface in a QWidget
+        container = QWidget.createWindowContainer(self.graph)
+        layout = QVBoxLayout()
+        layout.addWidget(container)
+
+        # Set up a central widget for the QMainWindow
+        central_widget = QWidget()
+        central_widget.setLayout(layout)
+        self.setCentralWidget(central_widget)
 
         # Start updating the graph
         self.timer_id = self.startTimer(100)
@@ -38,8 +48,12 @@ class Serial3DPlot(QMainWindow):
         if self.serial.in_waiting > 0:
             try:
                 line = self.serial.readline().decode('utf-8').strip()
-                data = np.array([float(v) for v in line.split(',')]).reshape((10, 10))
-
+                zones = line.split(',')
+                print(len(zones))
+                zones = [zone.split(':') for zone in zones]
+                print(zones)
+                 
+                data = np.array([float(v.split(':')[0]) for v in line.split(',')]).reshape((8, 8))
                 # Populate the proxy with the new data
                 rows, cols = data.shape
                 array = QSurfaceDataProxy.Array()
@@ -73,3 +87,4 @@ if __name__ == "__main__":
     window.show()
 
     sys.exit(app.exec())
+
