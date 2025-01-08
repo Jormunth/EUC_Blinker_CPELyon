@@ -65,6 +65,9 @@ async def log_ble_data():
         def handle_notification(sender, data):
             line = data.decode("utf-8").strip()
             print(f"Données reçues : {line}")
+            text_area.delete(1.0, tk.END)
+            text_area.insert(tk.END, f"{data}\n")
+            text_area.see(tk.END)  # Auto-scroll to the bottom
             try:
                 archive_data(data)
                 update_grid(data)
@@ -130,29 +133,35 @@ def archive_data(data):
 
 def update_grid(data):
     """
-    Met à jour la grille 8x8 avec les valeurs extraites des données.
+    Met à jour la grille 8x8 avec les valeurs extraites des données, en commençant
+    par le coin inférieur gauche, de gauche à droite, puis de bas en haut.
     :param data: Chaîne de caractères sous forme "-2:4,1:4,..."
     """
-
     try:
         # Transformer les données en une liste d'entiers
         values = [item.split(':')[0] for item in data.split(',') if ':' in item]
-        # Remplir les cases de la grille (8x8)
-        for i, label in enumerate(sum(grid_labels, [])):  # Transforme la grille en liste 1D
-            if i < len(values):
-                label.config(text=values[i])  # Mettre à jour le texte
-                print("test1\n")
-                # Couleur basée sur la valeur
-                if values[i] == 'X':
-                    label.config(bg="grey")
+
+        # Parcourir les cases en partant du bas
+        index = 0
+        for row in range(7, -1, -1):  # Parcourt les lignes de bas en haut
+            for col in range(8):  # Parcourt les colonnes de gauche à droite
+                if index < len(values):
+                    value = values[index]
+                    label = grid_labels[row][col]
+                    label.config(text=value)  # Mettre à jour le texte
+                    # Couleur basée sur la valeur
+                    if value == 'X':
+                        label.config(bg="grey")
+                    else:
+                        label.config(bg=get_color(value))
+                    index += 1
                 else:
-                    print("test2\n")
-                    print(values[i])
-                    label.config(bg=get_color(values[i]))
-            else:
-                label.config(text="", bg="white")  # Vider les cases restantes
+                    # Si plus de données, vider la case
+                    label = grid_labels[row][col]
+                    label.config(text="", bg="white")
+
     except Exception as e:
-        print("Erreur lors de la mise à jour de la grille : {e}\n")
+        print(f"Erreur lors de la mise à jour de la grille : {e}\n")
 
 def get_color(value):
     """

@@ -60,14 +60,12 @@ cat /dev/ttyACM0
   - Parity: None
   - Stop Bits: 1
 
-Connéxion au TOF viluasilation des valeurs.
+Connéxion au TOF visualisation des valeurs.
 Valeur capteur TOF : capteur_valor.png
 
 création du tof GUI (Graphique user interface) en connectique serial (vidéo capteur_tof)
 
 debut du portage en connectique BLE
-
-
 
 TODO : 
 
