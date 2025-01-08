@@ -1,0 +1,12 @@
+/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Projects/NUCLEO-F401RE/Examples/CUSTOM/VL53L8CX_SimpleRanging/Src/app_tof.c:68:6:MX_TOF_Init	1
+/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Projects/NUCLEO-F401RE/Examples/CUSTOM/VL53L8CX_SimpleRanging/Src/app_tof.c:90:6:MX_TOF_Process	1
+/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Projects/NUCLEO-F401RE/Examples/CUSTOM/VL53L8CX_SimpleRanging/Src/app_tof.c:103:13:MX_VL53L8CX_SimpleRanging_Init	2
+/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Projects/NUCLEO-F401RE/Examples/CUSTOM/VL53L8CX_SimpleRanging/Src/app_tof.c:190:13:MX_VL53L8CX_SimpleRanging_Process	3
+/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Projects/NUCLEO-F401RE/Examples/CUSTOM/VL53L8CX_SimpleRanging/Src/app_tof.c:229:13:print_result	8
+/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Projects/NUCLEO-F401RE/Examples/CUSTOM/VL53L8CX_SimpleRanging/Src/app_tof.c:261:13:toggle_resolution	5
+/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Projects/NUCLEO-F401RE/Examples/CUSTOM/VL53L8CX_SimpleRanging/Src/app_tof.c:291:13:toggle_signal_and_ambient	1
+/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Projects/NUCLEO-F401RE/Examples/CUSTOM/VL53L8CX_SimpleRanging/Src/app_tof.c:302:13:clear_screen	1
+/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Projects/NUCLEO-F401RE/Examples/CUSTOM/VL53L8CX_SimpleRanging/Src/app_tof.c:308:13:display_commands_banner	1
+/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Projects/NUCLEO-F401RE/Examples/CUSTOM/VL53L8CX_SimpleRanging/Src/app_tof.c:327:13:handle_cmd	5
+/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Projects/NUCLEO-F401RE/Examples/CUSTOM/VL53L8CX_SimpleRanging/Src/app_tof.c:350:16:get_key	1
+/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Projects/NUCLEO-F401RE/Examples/CUSTOM/VL53L8CX_SimpleRanging/Src/app_tof.c:359:17:com_has_data	1

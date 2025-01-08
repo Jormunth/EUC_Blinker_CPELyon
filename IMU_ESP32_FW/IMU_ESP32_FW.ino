@@ -13,8 +13,8 @@ MPU6050 mpu;
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 
 // Pins pour les LEDs de clignotement
-#define LEFT_BLINKER_PIN 17
-#define RIGHT_BLINKER_PIN 33
+#define LEFT_BLINKER_PIN 18
+#define RIGHT_BLINKER_PIN 19
 
 // Variables pour le clignotement
 bool isBlinkingL = false;
