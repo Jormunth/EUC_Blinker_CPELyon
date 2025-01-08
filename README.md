@@ -67,6 +67,14 @@ création du tof GUI (Graphique user interface) en connectique serial (vidéo ca
 
 debut du portage en connectique BLE
 
+08/01
+
+Essais connectique uart entre stm32 et ESP32 marche pas 
+début du portage VL53L5CX avec ESP32
+Utilisation d'un boust pour passer du 3.3V de la ESP32 au 5V du TOF
+Essai avec la stm32 le tof ne fonctionne pas en 3,3V
+Branchement et code : https://github.com/stm32duino/VL53L8CX/blob/main/examples/VL53L8CX_HelloWorld_I2C/VL53L8CX_HelloWorld_I2C.ino
+
 TODO : 
 
 - TOF_ble_gui
@@ -75,3 +83,7 @@ TODO :
 - Intégration avec led 
 - adaptation de l'alimentation d'entré
 - modélisation 3D pour le support
+
+UART 1 F401RE
+RX PA10
+TX PA9
