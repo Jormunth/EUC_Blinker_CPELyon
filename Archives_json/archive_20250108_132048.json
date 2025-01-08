@@ -1,0 +1,194 @@
+[
+    {
+        "timestamp": "2025-01-08T13:21:01.981644",
+        "data": "ets Jul 29 2019 12:21:46"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:02.011126",
+        "data": ""
+    },
+    {
+        "timestamp": "2025-01-08T13:21:02.051798",
+        "data": "rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:02.092056",
+        "data": "configsip: 0, SPIWP:0xee"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:02.123090",
+        "data": "clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:02.175241",
+        "data": "mode:DIO, clock div:1"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:02.212692",
+        "data": "load:0x3fff0030,len:4916"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:02.243099",
+        "data": "load:0x40078000,len:16436"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:02.270393",
+        "data": "load:0x40080400,len:4"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:02.314154",
+        "data": "ho 8 tail 4 room 4"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:02.344348",
+        "data": "load:0x40080404,len:3524"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:02.375863",
+        "data": "entry 0x400805b8"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:03.254558",
+        "data": "ets Jul 29 2019 12:21:46"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:03.286957",
+        "data": ""
+    },
+    {
+        "timestamp": "2025-01-08T13:21:03.325013",
+        "data": "rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:03.350515",
+        "data": "configsip: 0, SPIWP:0xee"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:03.387180",
+        "data": "clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:03.419431",
+        "data": "mode:DIO, clock div:1"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:03.448334",
+        "data": "load:0x3fff0030,len:4916"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:03.476851",
+        "data": "load:0x40078000,len:16436"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:03.505212",
+        "data": "load:0x40080400,len:4"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:03.539712",
+        "data": "ho 8 tail 4 room 4"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:03.620338",
+        "data": "load:0x40080404,len:3524"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:03.660639",
+        "data": "entry 0x400805b8"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:17.934672",
+        "data": "ets Jul 29 2019 12:21:46"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:17.949611",
+        "data": ""
+    },
+    {
+        "timestamp": "2025-01-08T13:21:17.962796",
+        "data": "rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:17.993448",
+        "data": "configsip: 0, SPIWP:0xee"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:18.042183",
+        "data": "clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:18.077872",
+        "data": "mode:DIO, clock div:1"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:18.103405",
+        "data": "load:0x3fff0030,len:4916"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:18.141094",
+        "data": "load:0x40078000,len:16436"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:18.182866",
+        "data": "load:0x40080400,len:4"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:18.214148",
+        "data": "ho 8 tail 4 room 4"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:18.257818",
+        "data": "load:0x40080404,len:3524"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:18.288063",
+        "data": "entry 0x400805b8"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:21.981613",
+        "data": "ets Jul 29 2019 12:21:46"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:22.049497",
+        "data": ""
+    },
+    {
+        "timestamp": "2025-01-08T13:21:22.097986",
+        "data": "rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:22.128230",
+        "data": "configsip: 0, SPIWP:0xee"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:22.159630",
+        "data": "clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:22.198331",
+        "data": "mode:DIO, clock div:1"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:22.232074",
+        "data": "load:0x3fff0030,len:4916"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:22.277118",
+        "data": "load:0x40078000,len:16436"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:22.312910",
+        "data": "load:0x40080400,len:4"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:22.352108",
+        "data": "ho 8 tail 4 room 4"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:22.381425",
+        "data": "load:0x40080404,len:3524"
+    },
+    {
+        "timestamp": "2025-01-08T13:21:22.403363",
+        "data": "entry 0x400805b8"
+    }
+]

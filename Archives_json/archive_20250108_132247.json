@@ -1,0 +1,146 @@
+[
+    {
+        "timestamp": "2025-01-08T13:23:00.848339",
+        "data": "ets Jul 29 2019 12:21:46"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:00.861670",
+        "data": ""
+    },
+    {
+        "timestamp": "2025-01-08T13:23:00.917408",
+        "data": "rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:00.951845",
+        "data": "configsip: 0, SPIWP:0xee"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:00.993644",
+        "data": "clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:01.030053",
+        "data": "mode:DIO, clock div:1"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:01.069539",
+        "data": "load:0x3fff0030,len:4916"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:01.111433",
+        "data": "load:0x40078000,len:16436"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:01.156455",
+        "data": "load:0x40080400,len:4"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:01.188921",
+        "data": "ho 8 tail 4 room 4"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:01.223836",
+        "data": "load:0x40080404,len:3524"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:01.257542",
+        "data": "entry 0x400805b8"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:01.939244",
+        "data": "ets Jul 29 2019 12:21:46"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:01.969594",
+        "data": ""
+    },
+    {
+        "timestamp": "2025-01-08T13:23:02.004635",
+        "data": "rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:02.037638",
+        "data": "configsip: 0, SPIWP:0xee"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:02.070809",
+        "data": "clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:02.112627",
+        "data": "mode:DIO, clock div:1"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:02.151229",
+        "data": "load:0x3fff0030,len:4916"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:02.183433",
+        "data": "load:0x40078000,len:16436"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:02.218557",
+        "data": "load:0x40080400,len:4"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:02.245297",
+        "data": "ho 8 tail 4 room 4"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:02.279340",
+        "data": "load:0x40080404,len:3524"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:02.312158",
+        "data": "entry 0x400805b8"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:02.981382",
+        "data": "ets Jul 29 2019 12:21:46"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:03.019815",
+        "data": ""
+    },
+    {
+        "timestamp": "2025-01-08T13:23:03.060462",
+        "data": "rst:0x1 (POWERON_RESET),boot:0x13 (SPI_FAST_FLASH_BOOT)"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:03.091443",
+        "data": "configsip: 0, SPIWP:0xee"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:03.126897",
+        "data": "clk_drv:0x00,q_drv:0x00,d_drv:0x00,cs0_drv:0x00,hd_drv:0x00,wp_drv:0x00"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:03.160419",
+        "data": "mode:DIO, clock div:1"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:03.203137",
+        "data": "load:0x3fff0030,len:4916"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:03.234686",
+        "data": "load:0x40078000,len:16436"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:03.280363",
+        "data": "load:0x40080400,len:4"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:03.324286",
+        "data": "ho 8 tail 4 room 4"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:03.363596",
+        "data": "load:0x40080404,len:3524"
+    },
+    {
+        "timestamp": "2025-01-08T13:23:03.386868",
+        "data": "entry 0x400805b8"
+    }
+]

@@ -1,0 +1,226 @@
+[
+    {
+        "timestamp": "2025-01-08T14:32:05.591521",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:32:05.623458",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:32:06.484524",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:32:06.523169",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:32:07.403776",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:32:07.426825",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:33:27.933472",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:33:27.970741",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:35:28.216845",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:35:28.242049",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:35:29.018998",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:35:29.045441",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:35:29.409901",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:35:29.442892",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:35:29.772856",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:35:29.801875",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:35:30.055892",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:35:30.074561",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:35:30.526273",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:35:30.548950",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:36:22.041070",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:36:22.067580",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:36:22.643224",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:36:22.668295",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:36:23.058740",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:36:23.087402",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:36:23.351423",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:36:23.386176",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:36:23.926533",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:36:23.954084",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:34.611567",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:34.637261",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:35.040992",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:35.069586",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:35.322199",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:35.341516",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:35.507841",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:35.534889",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:35.674666",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:35.699218",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:35.860924",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:35.887970",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:36.034613",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:36.054203",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:36.225187",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:36.247595",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:36.410743",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:36.439406",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:36.604887",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:36.634094",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:36.824681",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:37:36.856453",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:38:07.292149",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:38:07.316510",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    },
+    {
+        "timestamp": "2025-01-08T14:38:08.142223",
+        "data": "Test de communication via USART2"
+    },
+    {
+        "timestamp": "2025-01-08T14:38:08.158817",
+        "data": "VL53L8CX not detected at requested address (0x52)"
+    }
+]

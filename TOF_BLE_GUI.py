@@ -66,7 +66,7 @@ async def log_ble_data():
             line = data.decode("utf-8").strip()
             print(f"Données reçues : {line}")
             text_area.delete(1.0, tk.END)
-            text_area.insert(tk.END, f"{data}\n")
+            text_area.insert(tk.END, f"{line}\n")
             text_area.see(tk.END)  # Auto-scroll to the bottom
             try:
                 archive_data(data)

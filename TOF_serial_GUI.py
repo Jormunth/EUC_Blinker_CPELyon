@@ -73,6 +73,7 @@ def read_data():
         if ser.in_waiting > 0:
             received = ser.readline().decode('utf-8').strip()  # Read and decode
             # Efface la zone de texte avant d'afficher le nouveau message
+            print(f"Données reçues : {received}")
             text_area.delete(1.0, tk.END)
             text_area.insert(tk.END, f"{received}\n")
             text_area.see(tk.END)  # Auto-scroll to the bottom
