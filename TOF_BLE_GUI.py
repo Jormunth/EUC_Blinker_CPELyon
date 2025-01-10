@@ -69,8 +69,8 @@ async def log_ble_data():
             text_area.insert(tk.END, f"{line}\n")
             text_area.see(tk.END)  # Auto-scroll to the bottom
             try:
-                archive_data(data)
-                update_grid(data)
+                archive_data(line)
+                update_grid(line)
             except (IndexError, ValueError):
                 print("Erreur de parsing :", line)
 

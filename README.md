@@ -75,15 +75,22 @@ Utilisation d'un boust pour passer du 3.3V de la ESP32 au 5V du TOF
 Essai avec la stm32 le tof ne fonctionne pas en 3,3V
 Branchement et code : https://github.com/stm32duino/VL53L8CX/blob/main/examples/VL53L8CX_HelloWorld_I2C/VL53L8CX_HelloWorld_I2C.ino
 
+09/01
+
+TOF fonctionel avec la TTGO T dispay
+
+10/01 
+connection TOF BLE fonctionel 
+GUI fonctionnel fichuier csv fonctionel
+vérifier que ça fonctionne
+
 TODO : 
 
-- TOF_ble_gui
 - calibrer et detecter un semblant de gauche/droite
 - LED
 - Intégration avec led 
 - adaptation de l'alimentation d'entré
 - modélisation 3D pour le support
 
-UART 1 F401RE
-RX PA10
-TX PA9
+
+Source : https://github.com/nkolban/ESP32_BLE_Arduino
