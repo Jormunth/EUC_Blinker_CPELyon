@@ -14,9 +14,9 @@ MPU6050 mpu;
 #define BLE_DEVICE_NAME "ESP32_EUC_Left_Hand"
 
 // Configuration de l'accéléromètre et du gyroscope
-#define ACCEL_RANGE 2   // Options: 2, 4, 8, 16 (en g)
-#define GYRO_RANGE 250  // Options: 250, 500, 1000, 2000 (en °/s)
-#define IMU_ODR 52      // Desired Output Data Rate in Hz
+#define ACCEL_RANGE 4   // Options: 2, 4, 8, 16 (en g)
+#define GYRO_RANGE 500  // Options: 250, 500, 1000, 2000 (en °/s)
+#define ODR_IMU 52      // Options: 12.5, 26, 52, 104, 208, 416, 833 (en Hz)
 
 // Pin pour la lecture de la tension de la batterie
 const int batteryPin = 34;
@@ -28,10 +28,40 @@ const int buzzerPin = 17;
 // Variables pour l'échelle
 float LSB_TO_G;
 float LSB_TO_DPS;
+float LSB_TO_MDPS;
+float LSB_TO_MG;
 
 // Timing variables for MPU6050 data reading
 unsigned long lastReadTime = 0;
 const unsigned long readIntervalIMU = 1000 / ODR_IMU;  // Interval in ms (e.g., ~19ms for 52Hz)
+unsigned long lastBatteryReadTime = 0;
+const unsigned long batteryReadInterval = 3000;  // Battery check every 3 seconds
+
+// Declare the BLE characteristic globally
+BLECharacteristic *pCharacteristic;
+BLEServer *pServer;
+bool deviceConnected = false;
+bool buzzerState = false;  // Keeps track of the buzzer state
+
+// To calculate millis from micros only once
+unsigned long startMicros;
+
+// BLE Server callback to track connection status
+class MyServerCallbacks: public BLEServerCallbacks {
+  void onConnect(BLEServer* pServer) {
+    deviceConnected = true;
+    Serial.println("Client connected!");
+    buzzerState = true;
+    digitalWrite(buzzerPin, HIGH);  // Buzzer feedback on connection
+    delay(100);
+    digitalWrite(buzzerPin, LOW);
+  }
+
+  void onDisconnect(BLEServer* pServer) {
+    deviceConnected = false;
+    Serial.println("Client disconnected!");
+  }
+};
 
 void setup() {
   Serial.begin(115200);
@@ -70,6 +100,7 @@ void setup() {
       LSB_TO_G = 16384.0;
       break;
   }
+  LSB_TO_MG = 1000.0 / LSB_TO_G; // Convert to milligrams
 
   switch (GYRO_RANGE) {
     case 250:
@@ -94,16 +125,19 @@ void setup() {
       LSB_TO_DPS = 131.0;
       break;
   }
+  LSB_TO_MDPS = 1000.0 / LSB_TO_DPS; // Convert to millidegrees per second
 
   Serial.println("MPU6050 configuration completed!");
 
   // Initialisation BLE
   BLEDevice::init(BLE_DEVICE_NAME);
-  BLEServer *pServer = BLEDevice::createServer();
+  pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks());
+
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
   // Création d'une caractéristique pour les données
-  BLECharacteristic *pCharacteristic = pService->createCharacteristic(
+  pCharacteristic = pService->createCharacteristic(
                                           CHARACTERISTIC_UUID,
                                           BLECharacteristic::PROPERTY_READ |
                                           BLECharacteristic::PROPERTY_NOTIFY
@@ -128,52 +162,52 @@ void setup() {
   digitalWrite(buzzerPin, HIGH);
   delay(100);
   digitalWrite(buzzerPin, LOW);
+
+  // Store the initial micros() value
+  startMicros = micros();
 }
 
 void loop() {
-  unsigned long currentMillis = millis();
+  unsigned long currentMicros = micros() - startMicros;
+  unsigned long currentMillis = currentMicros / 1000;  // Convert micros to millis
 
-  // Read data from MPU6050 at the specified ODR
-  if (currentMillis - lastReadTime >= readIntervalIMU) {
-    lastReadTime = currentMillis;
-    int16_t ax, ay, az, gx, gy, gz;
+  // Wait until connected before fetching IMU data
+  if (deviceConnected) {
+    // Fetch IMU data at the specified interval
+    if (currentMillis - lastReadTime >= readIntervalIMU) {
+      lastReadTime = currentMillis;
+      int16_t ax, ay, az, gx, gy, gz;
 
-    // Read raw data from MPU6050
-    mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+      // Read raw data from MPU6050
+      mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 
-    // Convert accelerometer data to mg (millig)
-    int32_t ax_mg = (int32_t)(ax * 1000 / LSB_TO_G);
-    int32_t ay_mg = (int32_t)(ay * 1000 / LSB_TO_G);
-    int32_t az_mg = (int32_t)(az * 1000 / LSB_TO_G);
+      // Convert accelerometer data to mg (milligrams)
+      int32_t ax_mg = (int32_t)(ax * LSB_TO_MG);
+      int32_t ay_mg = (int32_t)(ay * LSB_TO_MG);
+      int32_t az_mg = (int32_t)(az * LSB_TO_MG);
 
-    // Convert gyroscope data to mdps (millidegrees per second)
-    int32_t gx_mdps = (int32_t)(gx * 1000 / LSB_TO_DPS);
-    int32_t gy_mdps = (int32_t)(gy * 1000 / LSB_TO_DPS);
-    int32_t gz_mdps = (int32_t)(gz * 1000 / LSB_TO_DPS);
+      // Convert gyroscope data to mdps (millidegrees per second)
+      int32_t gx_mdps = (int32_t)(gx * LSB_TO_MDPS);
+      int32_t gy_mdps = (int32_t)(gy * LSB_TO_MDPS);
+      int32_t gz_mdps = (int32_t)(gz * LSB_TO_MDPS);
 
-    // Battery voltage reading
-    int adcValue = analogRead(batteryPin);
-    batteryVoltage = adcValue * (3.52 / 0.89 / 4095.0); // Conversion to voltage (up to ~3.6V for ADC_11db)
+      // Construct the data string with integer values
+      String data = String(currentMicros) + "," +
+                    String(ax_mg) + "," + String(ay_mg) + "," + String(az_mg) + "," +
+                    String(gx_mdps) + "," + String(gy_mdps) + "," + String(gz_mdps);
 
-    if (batteryVoltage < 3.5) {
-      digitalWrite(buzzerPin, HIGH);
-    } else {
-      digitalWrite(buzzerPin, LOW);
+      // Send data to the connected BLE client
+      pCharacteristic->setValue(data.c_str());
+      pCharacteristic->notify();
     }
 
-    // Construct the data string with integer values
-    String data = String(micros()) + "," +
-                  String(ax_mg) + "," +
-                  String(ay_mg) + "," +
-                  String(az_mg) + "," +
-                  String(gx_mdps) + "," +
-                  String(gy_mdps) + "," +
-                  String(gz_mdps);
-
-    Serial.println(data); // Output to serial monitor
-
-    // Send the data via BLE
-    pCharacteristic->setValue(data.c_str());
-    pCharacteristic->notify(); // Notify connected clients
+    // Read the battery voltage every 3 seconds
+    if (currentMillis - lastBatteryReadTime >= batteryReadInterval) {
+      lastBatteryReadTime = currentMillis;
+      batteryVoltage = (analogRead(batteryPin) * 3.3) / 4095.0 * 2; // Read and scale voltage
+      if (batteryVoltage < 3.5){
+        digitalWrite(buzzerPin, HIGH);
+      }
+    }
   }
 }
