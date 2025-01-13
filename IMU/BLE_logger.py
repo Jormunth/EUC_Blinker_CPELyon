@@ -34,8 +34,7 @@ async def log_ble_data():
             # Fonction pour traiter les notifications BLE
             def handle_notification(sender, data):
                 line = data.decode("utf-8").strip()
-                timestamp = datetime.now().isoformat()
-                print(f"{timestamp},{line.replace('left,', '')}")
+                print(f"{line}")
 
             # Activer les notifications sur la caractéristique
             await client.start_notify(CHARACTERISTIC_UUID, handle_notification)
