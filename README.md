@@ -82,9 +82,19 @@ TOF fonctionel avec la TTGO T dispay
 10/01 
 connection TOF BLE fonctionel 
 GUI fonctionnel fichuier csv fonctionel
-vérifier que ça fonctionne
+
+13/01
+
+GUI Couple
+attention ajout d'un time delta (d'une heure dans get_video-timestamp) car probleme d'enregistrement et décalage d'un heure
 
 TODO : 
+
+- gui couple pouvoir ajouter droite gauche etc
+- gui couple fichier csv
+
+
+- enlever le boust et tester avec des LED
 
 - calibrer et detecter un semblant de gauche/droite
 - LED
@@ -94,3 +104,4 @@ TODO :
 
 
 Source : https://github.com/nkolban/ESP32_BLE_Arduino
+
