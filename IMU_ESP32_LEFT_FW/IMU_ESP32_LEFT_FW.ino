@@ -12,7 +12,7 @@ MPU6050 mpu;
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
 #define BLE_DEVICE_NAME "ESP32_EUC_Left_Hand"
-#define DEVICE_DATA_NAME = "left"
+// #define DEVICE_DATA_NAME = "left"
 
 // Timing variables for MPU6050 data reading
 unsigned long lastReadTime = 0;
@@ -107,7 +107,7 @@ void loop() {
     }
 
     // Construction d'une chaîne de données
-    String data = "left," +
+    String data = micros() +
                   String(ax_g, 4) + "," +
                   String(ay_g, 4) + "," +
                   String(az_g, 4) + "," +
