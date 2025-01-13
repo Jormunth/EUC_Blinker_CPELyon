@@ -1,16 +1,15 @@
-import csv
 from datetime import datetime
 import asyncio
 from bleak import BleakClient
 
 # Adresse MAC de votre ESP32 (à remplacer par l'adresse de votre périphérique)
-DEVICE_ADDRESS = "24:62:AB:F4:F4:7E"
+DEVICE_ADDRESS = "F8:B3:B7:22:2E:3A"
 
 # UUID du service et de la caractéristique BLE
 SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"  # Remplacez si nécessaire
 CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8"  # Remplacez si nécessaire
 
-# Nom du fichier CSV
+# Nom du fichier de sortie
 OUTPUT_FILE = "ble_mpu6050_logs.csv"
 
 async def log_ble_data():
@@ -37,12 +36,11 @@ async def log_ble_data():
             print("Caractéristique non trouvée.")
             return
 
-        # Ouvrir le fichier CSV
-        with open(OUTPUT_FILE, mode="w", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow(["# IKS01A3 "])
-            writer.writerow([""])
-            writer.writerow(["time[us],acc_x[mg],acc_y[mg],acc_z[mg],gyro_x[mdps],gyro_y[mdps],gyro_z[mdps]"])
+        # Ouvrir le fichier en mode écriture
+        with open(OUTPUT_FILE, mode="w") as file:
+            # Écrire les en-têtes
+            file.write("# IKS01A3 \n\n")
+            file.write("time[us],acc_x[mg],acc_y[mg],acc_z[mg],gyro_x[mdps],gyro_y[mdps],gyro_z[mdps] \n")
 
             try:
                 # Fonction pour traiter les notifications BLE
@@ -52,7 +50,10 @@ async def log_ble_data():
                     try:
                         data = line.split(",")
                         if len(data) == 6:
-                            writer.writerow([datetime.now().isoformat()] + data)
+                            # Écrire les données dans le fichier
+                            timestamp = datetime.now().isoformat()
+                            file.write(f"{timestamp},{','.join(data)}\n")
+                            file.flush()  # S'assurer que les données sont écrites immédiatement
                     except (IndexError, ValueError):
                         print("Erreur de parsing :", line)
 
