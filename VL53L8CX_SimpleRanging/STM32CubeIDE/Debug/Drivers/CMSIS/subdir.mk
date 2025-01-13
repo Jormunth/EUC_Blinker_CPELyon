@@ -5,7 +5,7 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Projects/NUCLEO-F401RE/Examples/CUSTOM/VL53L8CX_SimpleRanging/Src/system_stm32f4xx.c 
+/home/alix-deleule/Documents/CPE/5A/projet_majeur/S6_G6_Deleule_Delzenne-Zamparutti/VL53L8CX_SimpleRanging/Src/system_stm32f4xx.c 
 
 OBJS += \
 ./Drivers/CMSIS/system_stm32f4xx.o 
@@ -15,7 +15,7 @@ C_DEPS += \
 
 
 # Each subdirectory must supply rules for building sources it contributes
-Drivers/CMSIS/system_stm32f4xx.o: /home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Projects/NUCLEO-F401RE/Examples/CUSTOM/VL53L8CX_SimpleRanging/Src/system_stm32f4xx.c Drivers/CMSIS/subdir.mk
+Drivers/CMSIS/system_stm32f4xx.o: /home/alix-deleule/Documents/CPE/5A/projet_majeur/S6_G6_Deleule_Delzenne-Zamparutti/VL53L8CX_SimpleRanging/Src/system_stm32f4xx.c Drivers/CMSIS/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F401xE -c -I../../Inc -I../../../../../../../Drivers/STM32F4xx_HAL_Driver/Inc -I../../../../../../../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../../../../../../../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../../../../../../../Drivers/CMSIS/Include -I../../../../../../../Drivers/BSP/Components/vl53l8cx/modules -I../../../../../../../Drivers/BSP/Components/vl53l8cx/porting -I../../../../../../../Drivers/BSP/Components/vl53l8cx -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
 
 clean: clean-Drivers-2f-CMSIS

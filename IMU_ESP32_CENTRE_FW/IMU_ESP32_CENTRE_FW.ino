@@ -11,6 +11,7 @@ MPU6050 mpu;
 // UUIDs pour le service et la caractéristique BLE
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+#define BLE_DEVICE_NAME =   "ESP32_EUC_Centre"
 
 // Pins pour les LEDs de clignotement
 #define LEFT_BLINKER_PIN 18
@@ -19,10 +20,13 @@ MPU6050 mpu;
 // Variables pour le clignotement
 bool isBlinkingL = false;
 bool isBlinkingR = false;
+const unsigned long BLINKER_FREQUENCY = 1;  // Hz
+const unsigned long BLINKER_PERIOD = 1000/BLINKER_FREQUENCY;  // ms
 
 // Timing variables for MPU6050 data reading
 unsigned long lastReadTime = 0;
-const unsigned long readInterval = 20;  // 20ms
+const unsigned long ODR_IMU = 52;  // Hz
+const unsigned long readIntervalIMU = 1000/ODR_IMU;  // ms
 
 BLEServer *pServer = NULL;
 BLECharacteristic *pCharacteristic = NULL;
@@ -47,7 +51,7 @@ void setup() {
   }
 
   // Initialisation BLE
-  BLEDevice::init("ESP32_EUC_Right_Hand");
+  BLEDevice::init(BLE_DEVICE_NAME);
   pServer = BLEDevice::createServer();
   BLEService *pService = pServer->createService(SERVICE_UUID);
 
@@ -70,7 +74,7 @@ void loop() {
   unsigned long currentMillis = millis();
 
   // Lire les données du MPU6050 toutes les 20ms
-  if (currentMillis - lastReadTime >= readInterval) {
+  if (currentMillis - lastReadTime >= readIntervalIMU) {
     lastReadTime = currentMillis;
 
     int16_t ax, ay, az, gx, gy, gz;
@@ -112,18 +116,17 @@ void loop() {
 
   // Gestion du clignotement des LEDs
   if (isBlinkingL) {
-    digitalWrite(LEFT_BLINKER_PIN, (millis() % 1000) < 500);  // Clignote toutes les 500ms
+    digitalWrite(LEFT_BLINKER_PIN, (currentMillis % BLINKER_PERIOD) < BLINKER_PERIOD/2);  // Clignote toutes les 500ms
   } else {
     digitalWrite(LEFT_BLINKER_PIN, LOW);  // LED éteinte
   }
 
   if (isBlinkingR) {
-    digitalWrite(RIGHT_BLINKER_PIN, (millis() % 1000) < 500);  // Clignote toutes les 500ms
+    digitalWrite(RIGHT_BLINKER_PIN, (currentMillis % BLINKER_PERIOD) < BLINKER_PERIOD/2);  // Clignote toutes les 500ms
   } else {
     digitalWrite(RIGHT_BLINKER_PIN, LOW);  // LED éteinte
   }
 
-  delay(100); // Petite pause pour éviter de saturer le processeur
 }
 
 // Exemple de fonctions pour activer les clignotants (peut être appelé depuis une autre partie du programme)

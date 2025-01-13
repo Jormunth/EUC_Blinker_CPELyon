@@ -5,12 +5,12 @@
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS += \
-/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Drivers/BSP/Components/vl53l8cx/porting/platform.c \
-/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Drivers/BSP/Components/vl53l8cx/vl53l8cx.c \
-/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_api.c \
-/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_plugin_detection_thresholds.c \
-/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_plugin_motion_indicator.c \
-/home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_plugin_xtalk.c 
+/home/alix-deleule/Documents/Drivers/BSP/Components/vl53l8cx/porting/platform.c \
+/home/alix-deleule/Documents/Drivers/BSP/Components/vl53l8cx/vl53l8cx.c \
+/home/alix-deleule/Documents/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_api.c \
+/home/alix-deleule/Documents/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_plugin_detection_thresholds.c \
+/home/alix-deleule/Documents/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_plugin_motion_indicator.c \
+/home/alix-deleule/Documents/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_plugin_xtalk.c 
 
 OBJS += \
 ./Drivers/BSP/Components/platform.o \
@@ -30,17 +30,17 @@ C_DEPS += \
 
 
 # Each subdirectory must supply rules for building sources it contributes
-Drivers/BSP/Components/platform.o: /home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Drivers/BSP/Components/vl53l8cx/porting/platform.c Drivers/BSP/Components/subdir.mk
+Drivers/BSP/Components/platform.o: /home/alix-deleule/Documents/Drivers/BSP/Components/vl53l8cx/porting/platform.c Drivers/BSP/Components/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F401xE -c -I../../Inc -I../../../../../../../Drivers/STM32F4xx_HAL_Driver/Inc -I../../../../../../../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../../../../../../../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../../../../../../../Drivers/CMSIS/Include -I../../../../../../../Drivers/BSP/Components/vl53l8cx/modules -I../../../../../../../Drivers/BSP/Components/vl53l8cx/porting -I../../../../../../../Drivers/BSP/Components/vl53l8cx -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
-Drivers/BSP/Components/vl53l8cx.o: /home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Drivers/BSP/Components/vl53l8cx/vl53l8cx.c Drivers/BSP/Components/subdir.mk
+Drivers/BSP/Components/vl53l8cx.o: /home/alix-deleule/Documents/Drivers/BSP/Components/vl53l8cx/vl53l8cx.c Drivers/BSP/Components/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F401xE -c -I../../Inc -I../../../../../../../Drivers/STM32F4xx_HAL_Driver/Inc -I../../../../../../../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../../../../../../../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../../../../../../../Drivers/CMSIS/Include -I../../../../../../../Drivers/BSP/Components/vl53l8cx/modules -I../../../../../../../Drivers/BSP/Components/vl53l8cx/porting -I../../../../../../../Drivers/BSP/Components/vl53l8cx -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
-Drivers/BSP/Components/vl53l8cx_api.o: /home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_api.c Drivers/BSP/Components/subdir.mk
+Drivers/BSP/Components/vl53l8cx_api.o: /home/alix-deleule/Documents/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_api.c Drivers/BSP/Components/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F401xE -c -I../../Inc -I../../../../../../../Drivers/STM32F4xx_HAL_Driver/Inc -I../../../../../../../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../../../../../../../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../../../../../../../Drivers/CMSIS/Include -I../../../../../../../Drivers/BSP/Components/vl53l8cx/modules -I../../../../../../../Drivers/BSP/Components/vl53l8cx/porting -I../../../../../../../Drivers/BSP/Components/vl53l8cx -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
-Drivers/BSP/Components/vl53l8cx_plugin_detection_thresholds.o: /home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_plugin_detection_thresholds.c Drivers/BSP/Components/subdir.mk
+Drivers/BSP/Components/vl53l8cx_plugin_detection_thresholds.o: /home/alix-deleule/Documents/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_plugin_detection_thresholds.c Drivers/BSP/Components/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F401xE -c -I../../Inc -I../../../../../../../Drivers/STM32F4xx_HAL_Driver/Inc -I../../../../../../../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../../../../../../../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../../../../../../../Drivers/CMSIS/Include -I../../../../../../../Drivers/BSP/Components/vl53l8cx/modules -I../../../../../../../Drivers/BSP/Components/vl53l8cx/porting -I../../../../../../../Drivers/BSP/Components/vl53l8cx -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
-Drivers/BSP/Components/vl53l8cx_plugin_motion_indicator.o: /home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_plugin_motion_indicator.c Drivers/BSP/Components/subdir.mk
+Drivers/BSP/Components/vl53l8cx_plugin_motion_indicator.o: /home/alix-deleule/Documents/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_plugin_motion_indicator.c Drivers/BSP/Components/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F401xE -c -I../../Inc -I../../../../../../../Drivers/STM32F4xx_HAL_Driver/Inc -I../../../../../../../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../../../../../../../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../../../../../../../Drivers/CMSIS/Include -I../../../../../../../Drivers/BSP/Components/vl53l8cx/modules -I../../../../../../../Drivers/BSP/Components/vl53l8cx/porting -I../../../../../../../Drivers/BSP/Components/vl53l8cx -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
-Drivers/BSP/Components/vl53l8cx_plugin_xtalk.o: /home/alix-deleule/Documents/CPE/5A/projet_majeur/en.X-CUBE-TOF1/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_plugin_xtalk.c Drivers/BSP/Components/subdir.mk
+Drivers/BSP/Components/vl53l8cx_plugin_xtalk.o: /home/alix-deleule/Documents/Drivers/BSP/Components/vl53l8cx/modules/vl53l8cx_plugin_xtalk.c Drivers/BSP/Components/subdir.mk
 	arm-none-eabi-gcc "$<" -mcpu=cortex-m4 -std=gnu11 -g3 -DDEBUG -DUSE_HAL_DRIVER -DSTM32F401xE -c -I../../Inc -I../../../../../../../Drivers/STM32F4xx_HAL_Driver/Inc -I../../../../../../../Drivers/STM32F4xx_HAL_Driver/Inc/Legacy -I../../../../../../../Drivers/CMSIS/Device/ST/STM32F4xx/Include -I../../../../../../../Drivers/CMSIS/Include -I../../../../../../../Drivers/BSP/Components/vl53l8cx/modules -I../../../../../../../Drivers/BSP/Components/vl53l8cx/porting -I../../../../../../../Drivers/BSP/Components/vl53l8cx -O0 -ffunction-sections -fdata-sections -Wall -fstack-usage -fcyclomatic-complexity -MMD -MP -MF"$(@:%.o=%.d)" -MT"$@" --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -o "$@"
 
 clean: clean-Drivers-2f-BSP-2f-Components
