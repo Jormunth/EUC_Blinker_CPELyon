@@ -14,6 +14,7 @@ from PyQt5.QtWidgets import (
 from bleak import BleakClient
 from qasync import QEventLoop
 import numpy as np
+from scipy.signal import butter, filtfilt
 
 class Classification:
     def __init__(self):
@@ -28,21 +29,24 @@ class Classification:
         self.gyro_z_buffer = deque(maxlen=self.WINDOW_LENGTH)
 
     def add_data(self, data_string):
-        try:
-            values = data_string.split(',')
-            if len(values) == 7:  # Ensure correct data format
-                self.time_buffer.append(float(values[0]))
-                self.acc_x_buffer.append(float(values[1]))
-                self.acc_y_buffer.append(float(values[2]))
-                self.acc_z_buffer.append(float(values[3]))
-                self.gyro_x_buffer.append(float(values[4]))
-                self.gyro_y_buffer.append(float(values[5]))
-                self.gyro_z_buffer.append(float(values[6]))
+        # try:
+        values = data_string.split(',')
+        if len(values) == 7:  # Ensure correct data format
+            self.time_buffer.append(float(values[0]))
+            self.acc_x_buffer.append(float(values[1]))
+            self.acc_y_buffer.append(float(values[2]))
+            self.acc_z_buffer.append(float(values[3]))
+            self.gyro_x_buffer.append(float(values[4]))
+            self.gyro_y_buffer.append(float(values[5]))
+            self.gyro_z_buffer.append(float(values[6]))
+            if len(self.time_buffer) == self.WINDOW_LENGTH:  # Once the window is full, classify
                 return self.classify()
-        except ValueError:
-            print(f"[ERREUR] Impossible de convertir les données : {data_string}")
-        except Exception as e:
-            print(f"[ERREUR] Erreur inattendue lors de l'ajout des données : {e}")
+            else:
+                return "stationnary"
+        # except ValueError:
+        #     print(f"[ERREUR] Impossible de convertir les données : {data_string}")
+        # except Exception as e:
+        #     print(f"[ERREUR] Erreur inattendue lors de l'ajout des données : {e}")
 
     def calculate_norm(self, buffer_x, buffer_y, buffer_z):
         """
@@ -68,29 +72,84 @@ class Classification:
 
         return norms
 
+    def butter_lowpass_filter(self, data, cutoff, fs, order=4):
+        """
+        Apply a Butterworth low-pass filter to the data.
+        
+        Parameters:
+            data (array): Input data to filter.
+            cutoff (float): Cutoff frequency of the filter in Hz.
+            fs (float): Sampling frequency in Hz.
+            order (int): Order of the filter.
+
+        Returns:
+            array: Filtered data.
+        """
+        nyquist = 0.5 * fs
+        normal_cutoff = cutoff / nyquist
+        b, a = butter(order, normal_cutoff, btype='low', analog=False)
+        y = filtfilt(b, a, data)
+        return y
+
+    def count_peaks(self, data, sampling_rate=52, threshold=1.5):
+        """
+        Detect shakes from accelerometer data using the derivative and zero crossings.
+        
+        Parameters:
+            accel_data (list or np.array): Smoothed buffer of accelerometer norm values (1 second of data).
+            sampling_rate (int): Sampling rate in Hz (default: 52 Hz).
+            threshold (float): Minimum value to qualify as a peak (e.g., 1.5 m/s²).
+            
+        Returns:
+            list: Indices of detected peaks.
+        """
+        # Calculate the derivative of the acceleration data
+        derivative = np.diff(data)
+        derivative[0] = 0
+        
+        # Find zero crossings (where the derivative changes sign)
+        zero_crossings = np.where(np.diff(np.sign(derivative)))[0]
+        
+        # Check for peaks: derivative changes from positive to negative
+        peaks = [
+            idx+1 for idx in zero_crossings
+            if derivative[idx] > 0 and derivative[idx + 1] < 0 and data[idx] > threshold
+        ]
+        
+        return len(peaks), [int(data[idx+1]) for idx in zero_crossings if data[idx+1] > 2000]
 
     def classify(self):
         # Extract features based on the decision tree
         acc_norm_list = self.calculate_norm(self.acc_x_buffer, self.acc_y_buffer, self.acc_z_buffer)
         gyro_norm_list = self.calculate_norm(self.gyro_x_buffer, self.gyro_y_buffer, self.gyro_z_buffer)
-        f3_mean_acc_v = np.mean(acc_norm_list) if self.acc_x_buffer else 0
-        f4_mean_gyr_v = np.mean(gyro_norm_list) if self.gyro_x_buffer else 0
-        f2_abs_peak_detector_gyr_v = max(self.gyro_x_buffer + self.gyro_y_buffer + self.gyro_z_buffer) - min(self.gyro_x_buffer + self.gyro_y_buffer + self.gyro_z_buffer) if self.gyro_x_buffer else 0
+
+        # Sampling frequency (assumes evenly spaced data)
+        fs = 52
+        cutoff = 10  # Low-pass filter cutoff frequency in Hz
+
+        # Apply low-pass filter to norms
+        acc_norm_filtered = self.butter_lowpass_filter(acc_norm_list, cutoff, fs)
+        gyro_norm_filtered = self.butter_lowpass_filter(gyro_norm_list, cutoff, fs)
+
+        acc_peaks, a_p = self.count_peaks(acc_norm_filtered,threshold=15e3)
+        gyro_peaks, g_p = self.count_peaks(gyro_norm_filtered,threshold=1.5e6)
 
         # Apply the decision tree logic
-        if f3_mean_acc_v <= 1.0558:
-            if f3_mean_acc_v <= 1.0459:
-                if f4_mean_gyr_v <= 1.62695:
-                    return "other"
-                else:
-                    return "d_shake"
+        output = ""
+        if np.std(acc_norm_list) <= 100:
+            if np.std(gyro_norm_list) < 1000:
+                output = "stationnary"
             else:
-                return "stationnary"
+                output = "other"
         else:
-            if f2_abs_peak_detector_gyr_v <= 13:
-                return "chest_tap"
-            else:
-                return "d_shake"
+            if acc_peaks == 0:
+                output = "other"
+            elif acc_peaks == 1:
+                output = "chest_tap"
+            elif acc_peaks >= 2:
+                output = "d_shake"
+
+        return output + " " + str(acc_peaks) + " " + str(gyro_peaks) + " " + str(int(np.std(acc_norm_list))) + " " + str(a_p)
 
 class BLEClientWorker(QThread):
     connection_success = pyqtSignal(str)
