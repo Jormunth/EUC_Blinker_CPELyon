@@ -5,6 +5,7 @@
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
+
 // Création de l'objet MPU6050
 MPU6050 mpu;
 
@@ -40,28 +41,39 @@ const unsigned long batteryReadInterval = 3000;  // Battery check every 3 second
 // Declare the BLE characteristic globally
 BLECharacteristic *pCharacteristic;
 BLEServer *pServer;
-bool deviceConnected = false;
+bool BLEConnected = false;
+
+bool IMUConnected = false;
 bool buzzerState = false;  // Keeps track of the buzzer state
 
 // To calculate millis from micros only once
 unsigned long startMicros;
 
 // BLE Server callback to track connection status
+// BLE Server callback to track connection status
 class MyServerCallbacks: public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) {
-    deviceConnected = true;
-    Serial.println("Client connected!");
-    buzzerState = true;
-    digitalWrite(buzzerPin, HIGH);  // Buzzer feedback on connection
-    delay(100);
+    BLEConnected = true;
+    Serial.println("[BLE] Client connecté.");
+    digitalWrite(buzzerPin, HIGH);
+    delay(50);
     digitalWrite(buzzerPin, LOW);
   }
 
   void onDisconnect(BLEServer* pServer) {
-    deviceConnected = false;
-    Serial.println("Client disconnected!");
+    BLEConnected = false;
+    Serial.println("[BLE] Client déconnecté.");
+    pServer->getAdvertising()->start();  // Redémarrer la publicité
+    Serial.println("[BLE] Publicité BLE redémarrée.");
+    for (int8_t i = 0; i < 2; i++){
+      digitalWrite(buzzerPin, HIGH);
+      delay(50);
+      digitalWrite(buzzerPin, LOW);
+      delay(50);
+    }
   }
 };
+
 
 void setup() {
   Serial.begin(115200);
@@ -70,10 +82,12 @@ void setup() {
   Wire.begin();
   mpu.initialize();
   if (mpu.testConnection()) {
+    IMUConnected = true;
     Serial.println("MPU6050 connection successful");
   } else {
+    IMUConnected = false;
     Serial.println("MPU6050 connection failed");
-    while (1);
+    // while (1);
   }
 
   // Définir la plage de l'accéléromètre et du gyroscope
@@ -160,7 +174,7 @@ void setup() {
 
   // Signal setup fini
   digitalWrite(buzzerPin, HIGH);
-  delay(100);
+  delay(200);
   digitalWrite(buzzerPin, LOW);
 
   // Store the initial micros() value
@@ -172,41 +186,44 @@ void loop() {
   unsigned long currentMillis = currentMicros / 1000;  // Convert micros to millis
 
   // Wait until connected before fetching IMU data
-  if (deviceConnected) {
-    // Fetch IMU data at the specified interval
-    if (currentMillis - lastReadTime >= readIntervalIMU) {
-      lastReadTime = currentMillis;
-      int16_t ax, ay, az, gx, gy, gz;
+  if (BLEConnected) {
+    // Wait until connected to IMU
+    if (IMUConnected) {
+      // Fetch IMU data at the specified interval
+      if (currentMillis - lastReadTime >= readIntervalIMU) {
+        lastReadTime = currentMillis;
+        int16_t ax, ay, az, gx, gy, gz;
 
-      // Read raw data from MPU6050
-      mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+        // Read raw data from MPU6050
+        mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
 
-      // Convert accelerometer data to mg (milligrams)
-      int32_t ax_mg = (int32_t)(ax * LSB_TO_MG);
-      int32_t ay_mg = (int32_t)(ay * LSB_TO_MG);
-      int32_t az_mg = (int32_t)(az * LSB_TO_MG);
+        // Convert accelerometer data to mg (milligrams)
+        int32_t ax_mg = (int32_t)(ax * LSB_TO_MG);
+        int32_t ay_mg = (int32_t)(ay * LSB_TO_MG);
+        int32_t az_mg = (int32_t)(az * LSB_TO_MG);
 
-      // Convert gyroscope data to mdps (millidegrees per second)
-      int32_t gx_mdps = (int32_t)(gx * LSB_TO_MDPS);
-      int32_t gy_mdps = (int32_t)(gy * LSB_TO_MDPS);
-      int32_t gz_mdps = (int32_t)(gz * LSB_TO_MDPS);
+        // Convert gyroscope data to mdps (millidegrees per second)
+        int32_t gx_mdps = (int32_t)(gx * LSB_TO_MDPS);
+        int32_t gy_mdps = (int32_t)(gy * LSB_TO_MDPS);
+        int32_t gz_mdps = (int32_t)(gz * LSB_TO_MDPS);
 
-      // Construct the data string with integer values
-      String data = String(currentMicros) + "," +
-                    String(ax_mg) + "," + String(ay_mg) + "," + String(az_mg) + "," +
-                    String(gx_mdps) + "," + String(gy_mdps) + "," + String(gz_mdps);
+        // Construct the data string with integer values
+        String data = String(currentMicros) + "," +
+                      String(ax_mg) + "," + String(ay_mg) + "," + String(az_mg) + "," +
+                      String(gx_mdps) + "," + String(gy_mdps) + "," + String(gz_mdps);
 
-      // Send data to the connected BLE client
-      pCharacteristic->setValue(data.c_str());
-      pCharacteristic->notify();
-    }
+        // Send data to the connected BLE client
+        pCharacteristic->setValue(data.c_str());
+        pCharacteristic->notify();
+      }
 
-    // Read the battery voltage every 3 seconds
-    if (currentMillis - lastBatteryReadTime >= batteryReadInterval) {
-      lastBatteryReadTime = currentMillis;
-      batteryVoltage = (analogRead(batteryPin) * 3.3) / 4095.0 * 2; // Read and scale voltage
-      if (batteryVoltage < 3.5){
-        digitalWrite(buzzerPin, HIGH);
+      // Read the battery voltage every 3 seconds
+      if (currentMillis - lastBatteryReadTime >= batteryReadInterval) {
+        lastBatteryReadTime = currentMillis;
+        batteryVoltage = (analogRead(batteryPin) * 3.3) / 4095.0 * 2; // Read and scale voltage
+        if (batteryVoltage < 3.5){
+          digitalWrite(buzzerPin, HIGH);
+        }
       }
     }
   }
