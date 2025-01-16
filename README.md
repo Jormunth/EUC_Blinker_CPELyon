@@ -90,20 +90,7 @@ attention ajout d'un time delta (d'une heure dans get_video-timestamp) car probl
 
 TODO : 
 
-gui couple modifier fichier .csv
-diaporamam
-faire le plan des trucs à faire apres
-
-- gui couple pouvoir ajouter droite gauche etc
-- gui couple fichier csv
-
-
-- enlever le boust et tester avec des LED
-
-- calibrer et detecter un semblant de gauche/droite
-- LED
 - Intégration avec led 
-- adaptation de l'alimentation d'entré
 - modélisation 3D pour le support
 
 
