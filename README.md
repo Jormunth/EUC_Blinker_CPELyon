@@ -90,6 +90,10 @@ attention ajout d'un time delta (d'une heure dans get_video-timestamp) car probl
 
 TODO : 
 
+gui couple modifier fichier .csv
+diaporamam
+faire le plan des trucs à faire apres
+
 - gui couple pouvoir ajouter droite gauche etc
 - gui couple fichier csv
 
