@@ -1,8 +1,9 @@
 import tkinter as tk
 from tkinter import scrolledtext, ttk
 import asyncio
-from bleak import BleakClient, BleakScanner
+from bleak import BleakClient
 import re
+from bleak import BleakScanner
 import json
 import csv
 import os
@@ -28,10 +29,6 @@ if not os.path.exists(archive_folder_csv):
 
 # Générer un nom de fichier unique pour cette exécution
 archive_filename_csv = os.path.join(archive_folder_csv, f"archive_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
-
-# Boucle asyncio pour intégrer avec Tkinter
-def run_async_task(task):
-    asyncio.ensure_future(task)
 
 ##################################
 # BLE Configuration
@@ -205,19 +202,11 @@ device_address_entry = tk.Entry(settings_frame, width=20)
 device_address_entry.pack(side=tk.LEFT, padx=10)
 
 # Connect button
-connect_button = tk.Button(
-    settings_frame,
-    text="Connect",
-    command=lambda: run_async_task(log_ble_data())
-)
+connect_button = tk.Button(settings_frame, text="Connect", command=lambda: asyncio.run(log_ble_data()))
 connect_button.pack(side=tk.LEFT, padx=10)
 
 # Scan button
-scan_button = tk.Button(
-    settings_frame,
-    text="Scan",
-    command=lambda: run_async_task(scan_ble_devices())
-)
+scan_button = tk.Button(settings_frame, text="Scan", command=lambda: asyncio.run(scan_ble_devices()))
 scan_button.pack(side=tk.LEFT, padx=10)
 
 # Stop button
@@ -245,11 +234,6 @@ for row in range(8):
         label.grid(row=row, column=col, padx=2, pady=2)
         row_labels.append(label)
     grid_labels.append(row_labels)
-
-# Lancer la boucle asyncio
-asyncio_loop = asyncio.get_event_loop()
-asyncio_loop.create_task(asyncio.sleep(0))  # Maintenir la boucle active
-root.after(100, asyncio_loop.run_forever)  # Intégrer asyncio dans Tkinter
 
 # Run the Tkinter event loop
 root.mainloop()
