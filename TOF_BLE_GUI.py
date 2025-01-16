@@ -253,6 +253,10 @@ for row in range(8):
         row_labels.append(label)
     grid_labels.append(row_labels)
 
+# Lancer la boucle asyncio intégrée
+asyncio.get_event_loop().run_until_complete(asyncio.sleep(0))
+loop_integration()
+
 # Run the Tkinter event loop
 root.mainloop()
 
