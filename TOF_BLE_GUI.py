@@ -33,67 +33,58 @@ archive_filename_csv = os.path.join(archive_folder_csv, f"archive_{datetime.now(
 ##################################
 # BLE Configuration
 ##################################
-SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"  # Remplacez si nécessaire
-CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8"  # Remplacez si nécessaire
+
+SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
+CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8"
+
+# Variables globales
+ble_task = None
 
 async def log_ble_data():
-    DEVICE_ADDRESS = device_address_entry.get()  # Récupérer l'adresse du périphérique saisie
+    """
+    Fonction pour se connecter au périphérique BLE et gérer les notifications.
+    """
+    DEVICE_ADDRESS = device_address_entry.get()
     async with BleakClient(DEVICE_ADDRESS) as client:
         print(f"Connexion au périphérique {DEVICE_ADDRESS}")
-
-        # Vérifiez les services et caractéristiques du périphérique
         services = await client.get_services()
-        print("Services et caractéristiques :")
+        print("Services disponibles :")
         for service in services:
             print(f"Service UUID: {service.uuid}")
             for char in service.characteristics:
                 print(f"\tCaractéristique UUID: {char.uuid}")
         
-        # Vérifiez si la caractéristique souhaitée existe
-        characteristic_found = False
-        for service in services:
-            for char in service.characteristics:
-                if char.uuid == CHARACTERISTIC_UUID:
-                    characteristic_found = True
-                    break
-        
-        if not characteristic_found:
+        if CHARACTERISTIC_UUID not in [char.uuid for char in services.characteristics]:
             print("Caractéristique non trouvée.")
             return
 
-        # Fonction pour traiter les notifications BLE
         def handle_notification(sender, data):
             line = data.decode("utf-8").strip()
             print(f"Données reçues : {line}")
             text_area.delete(1.0, tk.END)
             text_area.insert(tk.END, f"{line}\n")
-            text_area.see(tk.END)  # Auto-scroll to the bottom
+            text_area.see(tk.END)
             try:
                 archive_data(line)
                 update_grid(line)
-            except (IndexError, ValueError):
-                print("Erreur de parsing :", line)
+            except Exception as e:
+                print(f"Erreur de traitement des données : {e}")
 
-        # Ouvrir les notifications
         await client.start_notify(CHARACTERISTIC_UUID, handle_notification)
         print("Notifications activées. Appuyez sur Ctrl+C pour arrêter.")
-        
-        # Attente pour recevoir les notifications
         while True:
             await asyncio.sleep(1)
 
 async def scan_ble_devices():
-    scan_text_area.delete(1.0, tk.END)  # Effacer le contenu précédent de la text_area du scan
-    scan_text_area.insert(tk.END, "Scan des périphériques BLE en cours...\n")  # Ajouter un message initial
+    scan_text_area.delete(1.0, tk.END)
+    scan_text_area.insert(tk.END, "Scan des périphériques BLE en cours...\n")
     devices = await BleakScanner.discover()
     if not devices:
         scan_text_area.insert(tk.END, "Aucun périphérique détecté.\n")
     else:
         scan_text_area.insert(tk.END, f"{len(devices)} périphérique(s) détecté(s) :\n")
         for device in devices:
-            name = device.name
-            if "ESP32_EUC" in name:  # Vérifie s'il contient "ESP32_EUC"
-                scan_text_area.insert(tk.END, f"Nom : {name}, Adresse MAC : {device.address}\n")
+            scan_text_area.insert(tk.END, f"Nom : {device.name}, Adresse MAC : {device.address}\n")
 
 
 ##################################
@@ -181,6 +172,33 @@ def get_color(value):
         print(f"Erreur dans get_color: {e}")
         return "#ffffff"  # Retourne blanc en cas d'erreur
 
+##################################
+# Intégration asyncio et Tkinter
+##################################
+def run_coroutine(coroutine):
+    """
+    Démarre une coroutine asyncio dans la boucle d'événements existante.
+    """
+    global ble_task
+    if ble_task:
+        ble_task.cancel()
+    ble_task = asyncio.create_task(coroutine)
+
+def stop_async_tasks():
+    """
+    Arrête toutes les tâches asyncio en cours.
+    """
+    global ble_task
+    if ble_task:
+        ble_task.cancel()
+    root.destroy()
+
+def loop_integration():
+    """
+    Intègre la boucle asyncio dans la boucle principale de Tkinter.
+    """
+    asyncio.get_event_loop().call_soon(root.after, 100, loop_integration)
+
 
 ##################################
 # Tkinter
@@ -202,15 +220,15 @@ device_address_entry = tk.Entry(settings_frame, width=20)
 device_address_entry.pack(side=tk.LEFT, padx=10)
 
 # Connect button
-connect_button = tk.Button(settings_frame, text="Connect", command=lambda: asyncio.run(log_ble_data()))
+connect_button = tk.Button(settings_frame, text="Connect", command=lambda: run_coroutine(log_ble_data()))
 connect_button.pack(side=tk.LEFT, padx=10)
 
 # Scan button
-scan_button = tk.Button(settings_frame, text="Scan", command=lambda: asyncio.run(scan_ble_devices()))
+scan_button = tk.Button(settings_frame, text="Scan", command=lambda: run_coroutine(scan_ble_devices()))
 scan_button.pack(side=tk.LEFT, padx=10)
 
 # Stop button
-stop_button = tk.Button(settings_frame, text="Arrêt", command=root.destroy)  # Commande pour fermer la fenêtre
+stop_button = tk.Button(settings_frame, text="Arrêt", command=stop_async_tasks)  # Commande pour fermer la fenêtre
 stop_button.pack(side=tk.LEFT, padx=10)
 
 # Créer une nouvelle zone de texte pour les résultats du scan
