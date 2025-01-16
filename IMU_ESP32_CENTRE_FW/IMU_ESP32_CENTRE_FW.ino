@@ -1,7 +1,7 @@
 #include <Wire.h>
 #include <MPU6050.h>
 #include <BLEDevice.h>
-#include <BLEServer.h>
+#include <BLEClient.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
 
@@ -11,7 +11,7 @@ MPU6050 mpu;
 // UUIDs pour le service et la caractéristique BLE
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
 #define CHARACTERISTIC_UUID "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-#define BLE_DEVICE_NAME =   "ESP32_EUC_Centre"
+#define BLE_DEVICE_NAME     "ESP32_EUC_Centre"
 
 // Pins pour les LEDs de clignotement
 #define LEFT_BLINKER_PIN 18
@@ -21,15 +21,67 @@ MPU6050 mpu;
 bool isBlinkingL = false;
 bool isBlinkingR = false;
 const unsigned long BLINKER_FREQUENCY = 1;  // Hz
-const unsigned long BLINKER_PERIOD = 1000/BLINKER_FREQUENCY;  // ms
+const unsigned long BLINKER_PERIOD = 1000 / BLINKER_FREQUENCY;  // ms
 
-// Timing variables for MPU6050 data reading
-unsigned long lastReadTime = 0;
-const unsigned long ODR_IMU = 52;  // Hz
-const unsigned long readIntervalIMU = 1000/ODR_IMU;  // ms
+// BLE client variables
+BLEClient* pClient = nullptr;
+BLERemoteCharacteristic* pRemoteCharacteristic = nullptr;
 
-BLEServer *pServer = NULL;
-BLECharacteristic *pCharacteristic = NULL;
+// Callback to handle notifications
+class MyClientCallback : public BLEClientCallbacks {
+  void onConnect(BLEClient* pClient) {
+    Serial.println("[BLE] Connected to server.");
+  }
+
+  void onDisconnect(BLEClient* pClient) {
+    Serial.println("[BLE] Disconnected from server.");
+    isBlinkingL = false;
+    isBlinkingR = false;
+  }
+};
+
+// Handle notifications from the "hand module"
+void notificationCallback(BLERemoteCharacteristic* pCharacteristic, uint8_t* data, size_t length, bool isNotify) {
+  String receivedData = String((char*)data).substring(0, length);
+  Serial.print("[BLE] Received: ");
+  Serial.println(receivedData);
+
+  if (receivedData == "2") {
+    activateRightBlinker();
+  } else if (receivedData == "1") {
+    deactivateRightBlinker();
+  }
+}
+
+// Connect to the "hand module" BLE server
+void connectToServer(const char* address) {
+  pClient = BLEDevice::createClient();
+  pClient->setClientCallbacks(new MyClientCallback());
+  
+  // Convert the address string to BLEAddress
+  BLEAddress bleAddress(address);
+
+  if (pClient->connect(bleAddress)) {
+    Serial.println("[BLE] Connected to BLE server.");
+
+    BLERemoteService* pRemoteService = pClient->getService(SERVICE_UUID);
+    if (pRemoteService) {
+      pRemoteCharacteristic = pRemoteService->getCharacteristic(CHARACTERISTIC_UUID);
+      if (pRemoteCharacteristic) {
+        if (pRemoteCharacteristic->canNotify()) {
+          pRemoteCharacteristic->registerForNotify(notificationCallback);
+          Serial.println("[BLE] Notification enabled.");
+        }
+      } else {
+        Serial.println("[BLE] Characteristic not found.");
+      }
+    } else {
+      Serial.println("[BLE] Service not found.");
+    }
+  } else {
+    Serial.println("[BLE] Failed to connect to server.");
+  }
+}
 
 void setup() {
   Serial.begin(115200);
@@ -37,99 +89,37 @@ void setup() {
   // Initialisation des LEDs
   pinMode(LEFT_BLINKER_PIN, OUTPUT);
   pinMode(RIGHT_BLINKER_PIN, OUTPUT);
-  digitalWrite(LEFT_BLINKER_PIN, LOW);  // LED éteinte au départ
-  digitalWrite(RIGHT_BLINKER_PIN, LOW); // LED éteinte au départ
-
-  // Initialisation du MPU6050
-  Wire.begin();
-  mpu.initialize();
-  if (mpu.testConnection()) {
-    Serial.println("MPU6050 connection successful");
-  } else {
-    Serial.println("MPU6050 connection failed");
-    while (1);
-  }
+  digitalWrite(LEFT_BLINKER_PIN, LOW);
+  digitalWrite(RIGHT_BLINKER_PIN, LOW);
 
   // Initialisation BLE
   BLEDevice::init(BLE_DEVICE_NAME);
-  pServer = BLEDevice::createServer();
-  BLEService *pService = pServer->createService(SERVICE_UUID);
-
-  // Création d'une caractéristique pour les données
-  pCharacteristic = pService->createCharacteristic(
-                      CHARACTERISTIC_UUID,
-                      BLECharacteristic::PROPERTY_READ |
-                      BLECharacteristic::PROPERTY_NOTIFY
-                    );
-  pCharacteristic->addDescriptor(new BLE2902());
-
-  // Démarrage du service BLE
-  pService->start();
-  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
-  pAdvertising->start();
-  Serial.println("BLE prêt et en mode publicité !");
+  connectToServer("F8:B3:B7:22:2E:3A");  // Replace with your "hand module" address
 }
 
 void loop() {
   unsigned long currentMillis = millis();
 
-  // Lire les données du MPU6050 toutes les 20ms
-  if (currentMillis - lastReadTime >= readIntervalIMU) {
-    lastReadTime = currentMillis;
-
-    int16_t ax, ay, az, gx, gy, gz;
-
-    // Lecture des données du MPU6050
-    mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
-
-    // Conversion des données
-    float ax_g = ax / 16.384;
-    float ay_g = ay / 16.384;
-    float az_g = az / 16.384;
-
-    float gx_deg = gx / 131.0;
-    float gy_deg = gy / 131.0;
-    float gz_deg = gz / 131.0;
-
-    // Construction d'une chaîne de données
-    String data = String(ax_g, 4) + "," +
-                  String(ay_g, 4) + "," +
-                  String(az_g, 4) + "," +
-                  String(gx_deg, 4) + "," +
-                  String(gy_deg, 4) + "," +
-                  String(gz_deg, 4) ;
-
-    // Envoi des données via BLE
-    pCharacteristic->setValue(data.c_str());
-    pCharacteristic->notify(); // Notification pour les clients connectés
-
-    Serial.println(data); // Affichage sur le moniteur série
-
-    if (gy_deg > 200){
-      activateRightBlinker();
-      deactivateLeftBlinker();
-    }else if(gy_deg < -200){
-      activateLeftBlinker();
-      deactivateRightBlinker();
-    }
-  }
-
   // Gestion du clignotement des LEDs
   if (isBlinkingL) {
-    digitalWrite(LEFT_BLINKER_PIN, (currentMillis % BLINKER_PERIOD) < BLINKER_PERIOD/2);  // Clignote toutes les 500ms
+    digitalWrite(LEFT_BLINKER_PIN, (currentMillis % BLINKER_PERIOD) < BLINKER_PERIOD / 2);
   } else {
-    digitalWrite(LEFT_BLINKER_PIN, LOW);  // LED éteinte
+    digitalWrite(LEFT_BLINKER_PIN, LOW);
   }
 
   if (isBlinkingR) {
-    digitalWrite(RIGHT_BLINKER_PIN, (currentMillis % BLINKER_PERIOD) < BLINKER_PERIOD/2);  // Clignote toutes les 500ms
+    digitalWrite(RIGHT_BLINKER_PIN, (currentMillis % BLINKER_PERIOD) < BLINKER_PERIOD / 2);
   } else {
-    digitalWrite(RIGHT_BLINKER_PIN, LOW);  // LED éteinte
+    digitalWrite(RIGHT_BLINKER_PIN, LOW);
   }
 
+  // Reconnect if disconnected
+  if (pClient && !pClient->isConnected()) {
+    connectToServer("F8:B3:B7:22:2E:3A");
+  }
 }
 
-// Exemple de fonctions pour activer les clignotants (peut être appelé depuis une autre partie du programme)
+// Example functions to control blinkers
 void activateLeftBlinker() {
   isBlinkingL = true;
 }

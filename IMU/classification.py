@@ -116,40 +116,55 @@ class Classification:
             if derivative[idx] > 0 and derivative[idx + 1] < 0 and data[idx] > threshold
         ]
         
-        return len(peaks), [int(data[idx+1]) for idx in zero_crossings if data[idx+1] > 2000]
+        return len(peaks), [int(data[i]) for i in peaks]
 
     def classify(self):
-        # Extract features based on the decision tree
+        # Calculate norms for accelerometer and gyroscope buffers
         acc_norm_list = self.calculate_norm(self.acc_x_buffer, self.acc_y_buffer, self.acc_z_buffer)
         gyro_norm_list = self.calculate_norm(self.gyro_x_buffer, self.gyro_y_buffer, self.gyro_z_buffer)
 
-        # Sampling frequency (assumes evenly spaced data)
-        fs = 52
-        cutoff = 10  # Low-pass filter cutoff frequency in Hz
+        # Standard deviation of accelerometer norm
+        acc_std = np.std(acc_norm_list)
+        gyro_std = np.std(gyro_norm_list)
 
-        # Apply low-pass filter to norms
+        # Decision tree logic
+        if acc_std < 100:  # "Low energy motion" condition
+            if gyro_std < 1000: # "Stationary" condition
+                return "stationnary"
+            return "unknown"
+
+        # Shake detection
+        acc_xz_mean = np.mean(self.acc_x_buffer) + np.mean(self.acc_z_buffer)
+        acc_y_mean_abs = abs(np.mean(self.acc_y_buffer))
+
+        # Low-pass filter parameters
+        fs = 52  # Sampling frequency (Hz)
+        cutoff = 10  # Low-pass filter cutoff frequency (Hz)
+
+        # Apply low-pass filter to the norms
         acc_norm_filtered = self.butter_lowpass_filter(acc_norm_list, cutoff, fs)
         gyro_norm_filtered = self.butter_lowpass_filter(gyro_norm_list, cutoff, fs)
+        
+        # Count peaks in the filtered norms
+        acc_peaks, _ = self.count_peaks(acc_norm_filtered, threshold=3e3)
+        gyro_peaks, _ = self.count_peaks(gyro_norm_filtered, threshold=1.5e6)
 
-        acc_peaks, a_p = self.count_peaks(acc_norm_filtered,threshold=15e3)
-        gyro_peaks, g_p = self.count_peaks(gyro_norm_filtered,threshold=1.5e6)
+        if acc_peaks == 0:
+            return "unknown"
 
-        # Apply the decision tree logic
-        output = ""
-        if np.std(acc_norm_list) <= 100:
-            if np.std(gyro_norm_list) < 1000:
-                output = "stationnary"
-            else:
-                output = "other"
-        else:
-            if acc_peaks == 0:
-                output = "other"
-            elif acc_peaks == 1:
-                output = "chest_tap"
-            elif acc_peaks >= 2:
-                output = "d_shake"
+        if acc_peaks == 1:
+            if acc_xz_mean < acc_y_mean_abs:
+                if np.ptp(self.acc_x_buffer) > np.ptp(self.acc_y_buffer):
+                    return "1_shake"
+            return "unknown"
 
-        return output + " " + str(acc_peaks) + " " + str(gyro_peaks) + " " + str(int(np.std(acc_norm_list))) + " " + str(a_p)
+        if acc_peaks >= 2:
+            if acc_xz_mean < acc_y_mean_abs:
+                if np.ptp(self.acc_y_buffer) > np.ptp(self.acc_x_buffer):
+                    return "2_shake"
+            return "unknown"
+
+        return "unknown"
 
 class BLEClientWorker(QThread):
     connection_success = pyqtSignal(str)
