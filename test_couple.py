@@ -8,8 +8,6 @@ from datetime import datetime, timedelta
 import ffmpeg
 from PIL import Image, ImageTk
 
-labeled_data = {}  # Dictionnaire pour stocker les données labélisées
-
 def load_csv():
     filepath = filedialog.askopenfilename(
         title="Sélectionner un fichier CSV",
@@ -21,34 +19,12 @@ def load_csv():
     try:
         with open(filepath, "r") as file:
             reader = csv.reader(file)
-            global data, new_csv_path, labeled_data
+            global data
             data = list(reader)
             timestamps = [row[0] for row in data if row]  # Collecte les timestamps
             timestamp_dropdown['values'] = timestamps
             file_label.config(text=f"Fichier choisi : {filepath.split('/')[-1]}")
-
-            # Créer le dossier `data_label` s'il n'existe pas
-            os.makedirs("data_label", exist_ok=True)
-
-            # Chemin pour le nouveau fichier CSV
-            import datetime
-            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
-            new_csv_path = os.path.join("data_label", f"labeled_data_{timestamp}.csv")
-            
-            # Charger les données existantes dans le dictionnaire
-            if os.path.exists(new_csv_path):
-                with open(new_csv_path, "r") as labeled_file:
-                    labeled_reader = csv.reader(labeled_file)
-                    next(labeled_reader, None)  # Sauter l'en-tête
-                    labeled_data = {row[0]: row[1] for row in labeled_reader}
-
-            # Créer le fichier si ce n'est pas encore fait
-            else:
-                with open(new_csv_path, "w", newline="") as new_file:
-                    writer = csv.writer(new_file)
-                    writer.writerow(["Data", "Label"])  # Entêtes
-
-            print("Succès", "Fichier CSV chargé avec succès.")
+            messagebox.showinfo("Succès", "Fichier CSV chargé avec succès.")
     except Exception as e:
         messagebox.showerror("Erreur", f"Impossible de charger le fichier : {e}")
 
@@ -61,7 +37,7 @@ def load_mp4():
         mp4_file_label.config(text="Aucun fichier MP4 choisi")
         return
     mp4_file_label.config(text=f"Fichier MP4 choisi : {filepath.split('/')[-1]}")
-    print("Succès", "Fichier MP4 chargé avec succès.")
+    messagebox.showinfo("Succès", "Fichier MP4 chargé avec succès.")
 
 
 def on_timestamp_select(event):
@@ -76,8 +52,8 @@ def on_timestamp_select(event):
 
             # Charger et afficher l'image du fichier MP4
             if mp4_file_label.cget("text") != "Aucun fichier MP4 choisi":
-                mp4_filename = mp4_file_label.cget("text").replace("Fichier MP4 choisi : ", "")
-                mp4_filepath = os.path.join("vid",mp4_filename)
+                mp4_filepath = mp4_file_label.cget("text").replace("Fichier MP4 choisi : ", "")
+                mp4_filepath = os.path.join("vid",mp4_filepath)
                 frame = extract_frame_from_mp4(mp4_filepath, selected_timestamp)
                 if frame is not None:
                     show_image_in_tkinter(frame)
@@ -119,12 +95,15 @@ def stop_app():
     root.quit()
 
 def normalize_timestamp(timestamp):
-    if timestamp is None:
-        raise ValueError("Le timestamp est vide. Vérifiez les données en entrée.")
-    if timestamp.tzinfo is not None:
-        return timestamp.astimezone(timezone.utc)
-    return timestamp.replace(tzinfo=timezone.utc)
-
+    """
+    Normalise un objet datetime pour enlever le décalage horaire et arrondir à la seconde.
+    """
+    if timestamp is not None:
+        # Supprimer le décalage horaire
+        timestamp = timestamp.replace(tzinfo=None)
+    # Arrondir à la seconde
+    rounded_timestamp = timestamp.replace(microsecond=0)
+    return rounded_timestamp
 
 def get_video_timestamp(mp4_filepath):
     """
@@ -214,64 +193,6 @@ def show_image_in_tkinter(frame):
     image_label.config(image=tk_image)
     image_label.image = tk_image  # Garder une référence à l'image
 
-def select_previous_timestamp():
-    """Passe au timestamp précédent dans la liste."""
-    current_timestamp = timestamp_var.get()
-    if not current_timestamp or not data:
-        return
-    timestamps = [row[0] for row in data if row]
-    if current_timestamp in timestamps:
-        current_index = timestamps.index(current_timestamp)
-        if current_index > 0:
-            new_timestamp = timestamps[current_index - 1]
-            timestamp_var.set(new_timestamp)
-            on_timestamp_select(None)
-
-def select_next_timestamp():
-    """Passe au timestamp suivant dans la liste."""
-    current_timestamp = timestamp_var.get()
-    if not current_timestamp or not data:
-        return
-    timestamps = [row[0] for row in data if row]
-    if current_timestamp in timestamps:
-        current_index = timestamps.index(current_timestamp)
-        if current_index < len(timestamps) - 1:
-            new_timestamp = timestamps[current_index + 1]
-            timestamp_var.set(new_timestamp)
-            on_timestamp_select(None)
-
-def save_label(label):
-    """
-    Sauvegarde ou met à jour les données actuelles de `text_area` avec le label donné dans le fichier CSV.
-    """
-    global new_csv_path, labeled_data
-    try:
-        data_to_save = text_area.get("1.0", tk.END).strip()  # Récupère le texte de la zone de texte
-        if not data_to_save:
-            messagebox.showwarning("Attention", "Aucune donnée à sauvegarder.")
-            return
-        
-        select_next_timestamp()
-
-        # Vérifier si les données existent déjà
-        if data_to_save in labeled_data:
-            labeled_data[data_to_save] = label  # Mettre à jour le label
-            print("Mise à jour", f"Le label a été mis à jour pour '{data_to_save}'.")
-        else:
-            labeled_data[data_to_save] = label  # Ajouter une nouvelle entrée
-            print("Succès", f"Données enregistrées avec le label '{label}'.")
-
-        # Écrire les données dans le fichier CSV
-        with open(new_csv_path, "w", newline="") as file:
-            writer = csv.writer(file)
-            writer.writerow(["Data", "Label"])  # Réécrire l'en-tête
-            for data, lbl in labeled_data.items():
-                writer.writerow([data, lbl])
-            
-
-    except Exception as e:
-        messagebox.showerror("Erreur", f"Impossible de sauvegarder les données : {e}")
-
 
 root = tk.Tk()
 root.title("Affichage des données CSV")
@@ -296,20 +217,8 @@ timestamp_dropdown = ttk.Combobox(frame, textvariable=timestamp_var, state="read
 timestamp_dropdown.grid(row=2, column=1, padx=5, pady=5, sticky="EW")
 timestamp_dropdown.bind("<<ComboboxSelected>>", on_timestamp_select)
 
-btn_previous = ttk.Button(frame, text="Précédent", command=select_previous_timestamp)
-btn_previous.grid(row=4, column=0, padx=5, pady=5, sticky="EW")
-
-btn_next = ttk.Button(frame, text="Suivant", command=select_next_timestamp)
-btn_next.grid(row=4, column=1, padx=5, pady=5, sticky="EW")
-
 text_area = tk.Text(frame, height=10, width=80)
 text_area.grid(row=3, column=0, columnspan=2, padx=5, pady=5, sticky="EW")
-
-btn_bras_droit = ttk.Button(frame, text="Bras Droit", command=lambda: save_label("bras_droit"))
-btn_bras_droit.grid(row=5, column=0, padx=5, pady=5, sticky="EW")
-
-btn_bras_gauche = ttk.Button(frame, text="Bras Gauche", command=lambda: save_label("bras_gauche"))
-btn_bras_gauche.grid(row=5, column=1, padx=5, pady=5, sticky="EW")
 
 file_label = ttk.Label(frame, text="Aucun fichier choisi")
 file_label.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="EW")

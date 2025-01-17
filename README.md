@@ -88,16 +88,16 @@ GUI fonctionnel fichuier csv fonctionel
 GUI Couple
 attention ajout d'un time delta (d'une heure dans get_video-timestamp) car probleme d'enregistrement et décalage d'un heure
 
+17/01 
+création du support pour les cartest de test
+
 TODO : 
 
-- Test BLE csv
- - Acquisition
- - labelissatiob
+
+ - labelissation
  - Entrainement
  - Implémentation
-
-- Intégration avec led 
-- modélisation 3D pour le support
+ - modélisation 3D pour le support
 
 
 Source : https://github.com/nkolban/ESP32_BLE_Arduino

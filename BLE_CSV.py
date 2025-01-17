@@ -73,7 +73,8 @@ async def scan_devices():
     else:
         print(f"{len(devices)} périphérique(s) détecté(s) :")
         for device in devices:
-            print(f"Nom : {device.name}, Adresse MAC : {device.address}")
+            if device.name!=None :
+                print(f"Nom : {device.name}, Adresse MAC : {device.address}")
 
 def main():
     print("Bienvenue dans l'application BLE.")
