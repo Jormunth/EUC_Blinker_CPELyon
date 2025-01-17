@@ -71,7 +71,6 @@ bool buzzerState = false;  // Keeps track of the buzzer state
 unsigned long startMicros;
 
 // BLE Server callback to track connection status
-// BLE Server callback to track connection status
 class MyServerCallbacks: public BLEServerCallbacks {
   void onConnect(BLEServer* pServer) {
     BLEConnected = true;

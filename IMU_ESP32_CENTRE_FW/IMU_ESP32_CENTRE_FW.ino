@@ -1,5 +1,6 @@
 #include <BLEDevice.h>
 #include <BLEClient.h>
+#include <BLEServer.h>
 #include <BLEUtils.h>
 #include <BLE2902.h>
 #include "I2Cdev.h"
@@ -58,6 +59,11 @@ BLEClient* rightClient = nullptr;
 BLERemoteCharacteristic* leftRemoteCharacteristic = nullptr;
 BLERemoteCharacteristic* rightRemoteCharacteristic = nullptr;
 
+// Declare the BLE characteristic globally
+BLECharacteristic *pCharacteristic;
+BLEServer *pServer;
+bool BLEConnected = false;
+
 // Création de l'objet MPU6050
 // class default I2C address is 0x68
 // specific I2C addresses may be passed as a parameter here
@@ -104,6 +110,20 @@ void dmpDataReady() {
   mpuInterrupt = true;
 }
 
+// BLE Server callback to track connection status
+class MyServerCallbacks: public BLEServerCallbacks {
+  void onConnect(BLEServer* pServer) {
+    BLEConnected = true;
+    Serial.println("[BLE] Client connecté.");
+  }
+
+  void onDisconnect(BLEServer* pServer) {
+    BLEConnected = false;
+    Serial.println("[BLE] Client déconnecté.");
+    pServer->getAdvertising()->start();  // Redémarrer la publicité
+    Serial.println("[BLE] Publicité BLE redémarrée.");
+  }
+};
 
 void setMpuFS(){
   // Définir la plage de l'accéléromètre et du gyroscope
@@ -242,9 +262,31 @@ BLEClient* connectToServer(const char* address, BLEClientCallbacks* clientCallba
 void setup() {
   Serial.begin(115200);
 
+  // Initialisation BLE
+  BLEDevice::init(BLE_DEVICE_NAME);
+  pServer = BLEDevice::createServer();
+  pServer->setCallbacks(new MyServerCallbacks());
+
+  BLEService *pService = pServer->createService(SERVICE_UUID);
+
+  // Création d'une caractéristique pour les données
+  pCharacteristic = pService->createCharacteristic(
+                                          CHARACTERISTIC_UUID,
+                                          BLECharacteristic::PROPERTY_READ |
+                                          BLECharacteristic::PROPERTY_NOTIFY
+                                        );
+  pCharacteristic->addDescriptor(new BLE2902());
+
+  // Démarrage du service BLE
+  pService->start();
+  BLEAdvertising *pAdvertising = BLEDevice::getAdvertising();
+  pAdvertising->start();
+  Serial.println("BLE prêt et en mode publicité !");
+
   // Initialisation du MPU6050
   // join I2C bus (I2Cdev library doesn't do this automatically)
   #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
+    Serial.println("I2CDEV_IMPLEMENTATION="+String(I2CDEV_IMPLEMENTATION));
     Wire.begin();
     Wire.setClock(400000); // 400kHz I2C clock. Comment this line if having compilation difficulties
   #elif I2CDEV_IMPLEMENTATION == I2CDEV_BUILTIN_FASTWIRE
@@ -327,7 +369,7 @@ void setup() {
 
   // Connexion au module droit
   rightClient = connectToServer(RIGHT_HAND_ADDRESS, new RightHandCallback(), &rightRemoteCharacteristic, rightNotificationCallback);
-}
+}   
 
 void loop() {
   unsigned long currentMillis = millis();
@@ -351,6 +393,14 @@ void loop() {
       Serial.print(ypr[1] * 180 / M_PI);
       Serial.print("\t");
       Serial.print(ypr[2] * 180 / M_PI);
+
+
+      if (BLEConnected){
+        String data = String(ypr[0] * 180 / M_PI) + "," + String(ypr[1] * 180 / M_PI) + "," + String(ypr[2] * 180 / M_PI);
+        // Send data to the connected BLE client
+        pCharacteristic->setValue(data.c_str());
+        pCharacteristic->notify();
+      }
 
       if (ENABLE_DEBUG_PRINT_IMU) {
         mpu.dmpGetAccel(&aa, fifoBuffer);

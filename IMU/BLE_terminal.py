@@ -3,8 +3,10 @@ from bleak import BleakClient
 
 # Replace with the hardcoded BLE address
 TOF_ADDRESS = "24:62:AB:F4:F4:7E"
-IMU_ADDRESS_ = "F8:B3:B7:22:2E:3A"
-DEVICE_ADDRESS = TOF_ADDRESS  # Replace with your BLE device address
+IMU_ADDRESS = "F8:B3:B7:22:2E:3A"
+CENTRAL_ADDRESS = "CC:DB:A7:9E:DC:FA"
+
+DEVICE_ADDRESS = CENTRAL_ADDRESS  # Replace with your BLE device address
 CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8"  # Replace with the correct characteristic UUID
 
 async def connect_and_listen(address):
