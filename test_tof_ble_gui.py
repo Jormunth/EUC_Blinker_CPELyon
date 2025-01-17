@@ -8,7 +8,6 @@ import json
 import csv
 import os
 from datetime import datetime
-import threading
 
 ##################################
 #
@@ -34,75 +33,68 @@ archive_filename_csv = os.path.join(archive_folder_csv, f"archive_{datetime.now(
 ##################################
 # BLE Configuration
 ##################################
-SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
-CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8"
-
-# Variables globales
-ble_task = None
+SERVICE_UUID = "4fafc201-1fb5-459e-8fcc-c5c9c331914b"  # Remplacez si nécessaire
+CHARACTERISTIC_UUID = "beb5483e-36e1-4688-b7f5-ea07361b26a8"  # Remplacez si nécessaire
 
 async def log_ble_data():
-    """
-    Fonction pour se connecter au périphérique BLE et gérer les notifications.
-    """
-    DEVICE_ADDRESS = device_address_entry.get()
+    DEVICE_ADDRESS = device_address_entry.get()  # Récupérer l'adresse du périphérique saisie
     async with BleakClient(DEVICE_ADDRESS) as client:
         print(f"Connexion au périphérique {DEVICE_ADDRESS}")
+
+        # Vérifiez les services et caractéristiques du périphérique
         services = await client.get_services()
-        print("Services disponibles :")
+        print("Services et caractéristiques :")
         for service in services:
             print(f"Service UUID: {service.uuid}")
             for char in service.characteristics:
                 print(f"\tCaractéristique UUID: {char.uuid}")
         
-        if CHARACTERISTIC_UUID not in [char.uuid for char in services.characteristics]:
+        # Vérifiez si la caractéristique souhaitée existe
+        characteristic_found = False
+        for service in services:
+            for char in service.characteristics:
+                if char.uuid == CHARACTERISTIC_UUID:
+                    characteristic_found = True
+                    break
+        
+        if not characteristic_found:
             print("Caractéristique non trouvée.")
             return
 
+        # Fonction pour traiter les notifications BLE
         def handle_notification(sender, data):
             line = data.decode("utf-8").strip()
             print(f"Données reçues : {line}")
             text_area.delete(1.0, tk.END)
             text_area.insert(tk.END, f"{line}\n")
-            text_area.see(tk.END)
+            text_area.see(tk.END)  # Auto-scroll to the bottom
             try:
                 archive_data(line)
                 update_grid(line)
-            except Exception as e:
-                print(f"Erreur de traitement des données : {e}")
+            except (IndexError, ValueError):
+                print("Erreur de parsing :", line)
 
+        # Ouvrir les notifications
         await client.start_notify(CHARACTERISTIC_UUID, handle_notification)
         print("Notifications activées. Appuyez sur Ctrl+C pour arrêter.")
+        
+        # Attente pour recevoir les notifications
         while True:
             await asyncio.sleep(1)
 
 async def scan_ble_devices():
-    scan_text_area.delete(1.0, tk.END)
-    scan_text_area.insert(tk.END, "Scan des périphériques BLE en cours...\n")
+    scan_text_area.delete(1.0, tk.END)  # Effacer le contenu précédent de la text_area du scan
+    scan_text_area.insert(tk.END, "Scan des périphériques BLE en cours...\n")  # Ajouter un message initial
     devices = await BleakScanner.discover()
     if not devices:
         scan_text_area.insert(tk.END, "Aucun périphérique détecté.\n")
     else:
         scan_text_area.insert(tk.END, f"{len(devices)} périphérique(s) détecté(s) :\n")
         for device in devices:
-            scan_text_area.insert(tk.END, f"Nom : {device.name}, Adresse MAC : {device.address}\n")
+            name = device.name
+            if "ESP32_EUC" in name:  # Vérifie s'il contient "ESP32_EUC"
+                scan_text_area.insert(tk.END, f"Nom : {name}, Adresse MAC : {device.address}\n")
 
-
-##################################
-# Intégration asyncio et Tkinter
-##################################
-def run_coroutine_threadsafe(coroutine):
-    """
-    Démarre une coroutine asyncio dans la boucle d'événements en arrière-plan.
-    """
-    asyncio.run_coroutine_threadsafe(coroutine, asyncio.get_event_loop())
-
-def asyncio_thread():
-    """
-    Démarre la boucle asyncio dans un thread séparé.
-    """
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    loop.run_forever()
 
 ##################################
 # Archivage // Grid
@@ -191,38 +183,49 @@ def get_color(value):
 
 
 ##################################
-# Tkinter GUI
+# Tkinter
 ##################################
+
+# Create the main Tkinter window
 root = tk.Tk()
 root.title("TOF BLE GUI")
 
+# Create the top frame for connection settings
 settings_frame = tk.Frame(root)
 settings_frame.pack(pady=10, fill=tk.X)
 
+# Champ adresse du périphérique
 device_address_label = tk.Label(settings_frame, text="Device Address:")
 device_address_label.pack(side=tk.LEFT, padx=10)
 
 device_address_entry = tk.Entry(settings_frame, width=20)
 device_address_entry.pack(side=tk.LEFT, padx=10)
 
-connect_button = tk.Button(settings_frame, text="Connect", command=lambda: run_coroutine_threadsafe(log_ble_data()))
+# Connect button
+connect_button = tk.Button(settings_frame, text="Connect", command=lambda: asyncio.run(log_ble_data()))
 connect_button.pack(side=tk.LEFT, padx=10)
 
-scan_button = tk.Button(settings_frame, text="Scan", command=lambda: run_coroutine_threadsafe(scan_ble_devices()))
+# Scan button
+scan_button = tk.Button(settings_frame, text="Scan", command=lambda: asyncio.run(scan_ble_devices()))
 scan_button.pack(side=tk.LEFT, padx=10)
 
-stop_button = tk.Button(settings_frame, text="Arrêt", command=root.destroy)
+# Stop button
+stop_button = tk.Button(settings_frame, text="Arrêt", command=root.destroy)  # Commande pour fermer la fenêtre
 stop_button.pack(side=tk.LEFT, padx=10)
 
+# Créer une nouvelle zone de texte pour les résultats du scan
 scan_text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, height=4)
 scan_text_area.pack(pady=10, fill=tk.BOTH, expand=True)
 
-text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD, height=7)
+# Create the resizable text area
+text_area = scrolledtext.ScrolledText(root, wrap=tk.WORD,  height=7)
 text_area.pack(pady=10, fill=tk.BOTH, expand=True)
 
+# Cadre pour la grille 8x8
 grid_frame = tk.Frame(root)
 grid_frame.pack(pady=10)
 
+# Création d'une grille de 8x8 cases
 grid_labels = []
 for row in range(8):
     row_labels = []
@@ -232,8 +235,6 @@ for row in range(8):
         row_labels.append(label)
     grid_labels.append(row_labels)
 
-# Démarrer la boucle asyncio dans un thread séparé
-thread = threading.Thread(target=asyncio_thread, daemon=True)
-thread.start()
-
+# Run the Tkinter event loop
 root.mainloop()
+

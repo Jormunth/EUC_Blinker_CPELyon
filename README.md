@@ -90,6 +90,11 @@ attention ajout d'un time delta (d'une heure dans get_video-timestamp) car probl
 
 TODO : 
 
+- Test BLE csv
+ - Acquisition
+ - labelissatiob
+ - Entrainement
+ - Implémentation
 
 - Intégration avec led 
 - modélisation 3D pour le support
