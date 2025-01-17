@@ -289,21 +289,7 @@ int8_t classify() {
   return 3;
 }
 
-void setup() {
-  Serial.begin(115200);
-
-  // Initialisation du MPU6050
-  Wire.begin();
-  mpu.initialize();
-  if (mpu.testConnection()) {
-    IMUConnected = true;
-    Serial.println("MPU6050 connection successful");
-  } else {
-    IMUConnected = false;
-    Serial.println("MPU6050 connection failed");
-    // while (1);
-  }
-
+void setMpuFS(){
   // Définir la plage de l'accéléromètre et du gyroscope
   switch (ACCEL_RANGE) {
     case 2:
@@ -354,7 +340,23 @@ void setup() {
       break;
   }
   LSB_TO_MDPS = 1000.0 / LSB_TO_DPS; // Convert to millidegrees per second
+}
 
+void setup() {
+  Serial.begin(115200);
+
+  // Initialisation du MPU6050
+  Wire.begin();
+  mpu.initialize();
+  if (mpu.testConnection()) {
+    IMUConnected = true;
+    Serial.println("MPU6050 connection successful");
+  } else {
+    IMUConnected = false;
+    Serial.println("MPU6050 connection failed");
+    // while (1);
+  }
+  setMpuFS();
   Serial.println("MPU6050 configuration completed!");
 
   // Initialisation BLE
