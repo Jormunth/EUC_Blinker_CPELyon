@@ -4,8 +4,10 @@ import csv
 import cv2
 import os
 import subprocess
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import ffmpeg
+from hachoir.parser import createParser
+from hachoir.metadata import extractMetadata
 from PIL import Image, ImageTk
 
 labeled_data = {}  # Dictionnaire pour stocker les données labélisées
@@ -125,29 +127,31 @@ def normalize_timestamp(timestamp):
         return timestamp.astimezone(timezone.utc)
     return timestamp.replace(tzinfo=timezone.utc)
 
-
 def get_video_timestamp(mp4_filepath):
     """
     Récupère le timestamp exact où la vidéo a été enregistrée à partir des métadonnées.
+    Utilise la bibliothèque hachoir.
     """
     try:
-        # Lire les métadonnées avec ffprobe
-        probe = ffmpeg.probe(mp4_filepath)
-        # Parcourir les streams pour trouver 'creation_time'
-        for stream in probe['streams']:
-            if 'tags' in stream and 'creation_time' in stream['tags']:
-                creation_time_str = stream['tags']['creation_time']
-                # Convertir le timestamp en objet datetime
-                creation_time = datetime.fromisoformat(creation_time_str.replace('Z', '+00:00'))
-                print("test1")
-                print(creation_time)
-                adjusted_timestamp = creation_time + timedelta(hours=1)
-                return adjusted_timestamp
-        # Si aucune métadonnée de création n'est trouvée
-        raise ValueError("Timestamp de création non trouvé dans les métadonnées.")
+        parser = createParser(mp4_filepath)
+        if not parser:
+            raise ValueError("Impossible de créer un parser pour le fichier MP4.")
+
+        metadata = extractMetadata(parser)
+        if not metadata:
+            raise ValueError("Impossible d'extraire les métadonnées.")
+
+        creation_time = metadata.get("creation_date")
+        if not creation_time:
+            raise ValueError("Timestamp de création non trouvé dans les métadonnées.")
+
+        # Retourne le timestamp comme un objet datetime
+        return creation_time
+
     except Exception as e:
         print(f"Erreur lors de l'extraction du timestamp : {e}")
         return None
+
 
 def extract_frame_from_mp4(mp4_filepath, timestamp_str):
     """
@@ -309,7 +313,10 @@ btn_bras_droit = ttk.Button(frame, text="Bras Droit", command=lambda: save_label
 btn_bras_droit.grid(row=5, column=0, padx=5, pady=5, sticky="EW")
 
 btn_bras_gauche = ttk.Button(frame, text="Bras Gauche", command=lambda: save_label("bras_gauche"))
-btn_bras_gauche.grid(row=5, column=1, padx=5, pady=5, sticky="EW")
+btn_bras_gauche.grid(row=5, column=2, padx=5, pady=5, sticky="EW")
+
+btn_vide = ttk.Button(frame, text="Label Vide", command=lambda: save_label(""))
+btn_vide.grid(row=5, column=1, padx=5, pady=5, sticky="EW")
 
 file_label = ttk.Label(frame, text="Aucun fichier choisi")
 file_label.grid(row=1, column=0, columnspan=2, padx=5, pady=5, sticky="EW")

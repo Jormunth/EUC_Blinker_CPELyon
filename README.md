@@ -88,13 +88,23 @@ GUI fonctionnel fichuier csv fonctionel
 GUI Couple
 attention ajout d'un time delta (d'une heure dans get_video-timestamp) car probleme d'enregistrement et décalage d'un heure
 
+14/01
+Modification de GUI couple pour pouvoir labélisé les données et créer un nouveau fichier csv
+
+16/01
+BLE_CSV car TOF BLE probléme non résolvable.
+
 17/01 
 création du support pour les cartest de test
+acquisition de données
+
+18/01 
+Modification de GUI COuple pour support windows et labellisation des données
 
 TODO : 
 
-
  - labelissation
+ - créer un fichier csv à partir des autres
  - Entrainement
  - Implémentation
  - modélisation 3D pour le support
