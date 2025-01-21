@@ -13,7 +13,13 @@
  * pin 11 (5V) of the VL53L8CX satellite connected to 5V of the Nucleo board
  * GPIO1 of VL53L8CX satellite connected to A2 pin of the Nucleo board (not used)
  * GND of the VL53L8CX satellite connected to GND of the Nucleo board
+ *
+ * Permet de visualiser les valeur du VL53L8 en connectique BLE
+ * 
+ * 
  */
+
+
 
 /* Includes ------------------------------------------------------------------*/
 
