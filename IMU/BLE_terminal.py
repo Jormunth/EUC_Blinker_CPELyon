@@ -18,7 +18,8 @@ async def connect_and_listen(address):
 
                 # Define the notification handler
                 def handle_notification(sender, data):
-                    print(f"[NOTIFICATION] Data received: {data.decode('utf-8', errors='ignore')}")
+                    tab = '\t'
+                    print(f"{data.decode('utf-8', errors='ignore').replace(',',tab)}")
 
                 # Start receiving notifications from the given characteristic UUID
                 await client.start_notify(CHARACTERISTIC_UUID, handle_notification)

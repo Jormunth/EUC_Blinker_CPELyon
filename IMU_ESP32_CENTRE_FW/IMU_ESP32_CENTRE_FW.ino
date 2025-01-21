@@ -13,7 +13,9 @@
 
 #define ENABLE_DEBUG_PRINT_BLE 0
 #define ENABLE_DEBUG_PRINT_IMU 0
+#define ENABLE_DEBUG_PRINT_IMU_BLE 0
 #define ENABLE_IMU_FUSION 1
+#define DEBUG 1
 
 // UUIDs pour le service et la caractéristique BLE
 #define SERVICE_UUID        "4fafc201-1fb5-459e-8fcc-c5c9c331914b"
@@ -28,8 +30,8 @@
 #define LEFT_BLINKER_PIN 18
 #define RIGHT_BLINKER_PIN 19
 
-#define LEFT_COMMAND 0
-#define RIGHT_COMMAND 1
+#define LEFT 0
+#define RIGHT 1
 
 // Configuration de l'accéléromètre et du gyroscope
 #define ACCEL_RANGE 4   // Options: 2, 4, 8, 16 (en g)
@@ -50,6 +52,15 @@ bool isBlinkingR = false;
 const unsigned long BLINKER_FREQUENCY = 1;  // Hz
 const unsigned long BLINKER_PERIOD = 1000 / BLINKER_FREQUENCY;  // ms
 long int prev_millis_blink_command = 0;
+int isTurning = false;
+float prevYaw = 0;
+#define BUFFER_SIZE 15
+float dy_buffer[BUFFER_SIZE];
+unsigned int bufferIndex = 0;
+boolean isFirstBlink = true;
+float startYaw = 0;
+#define TURN_ANGLE_THRESHOLD 20
+
 
 // BLE client variables
 BLEClient* leftClient = nullptr;
@@ -70,7 +81,9 @@ bool BLEConnected = false;
 // AD0 low = 0x68 (default for SparkFun breakout and InvenSense evaluation board)
 // AD0 high = 0x69
 MPU6050 mpu;
-#define OUTPUT_READABLE_YAWPITCHROLL
+// #define OUTPUT_READABLE_YAWPITCHROLL
+#define OUTPUT_READABLE_EULER
+
 bool IMUConnected = false;
 // Timing variables for MPU6050 data reading
 unsigned long lastReadTime = 0;
@@ -98,9 +111,6 @@ VectorFloat gravity;    // [x, y, z]            gravity vector
 float euler[3];         // [psi, theta, phi]    Euler angle container
 float ypr[3];           // [yaw, pitch, roll]   yaw/pitch/roll container and gravity vector
 
-// packet structure for InvenSense teapot demo
-uint8_t teapotPacket[14] = { '$', 0x02, 0, 0, 0, 0, 0, 0, 0, 0, 0x00, 0x00, '\r', '\n' };
-
 // ================================================================
 // ===               INTERRUPT DETECTION ROUTINE                ===
 // ================================================================
@@ -125,59 +135,6 @@ class MyServerCallbacks: public BLEServerCallbacks {
   }
 };
 
-void setMpuFS(){
-  // Définir la plage de l'accéléromètre et du gyroscope
-  switch (ACCEL_RANGE) {
-    case 2:
-      mpu.setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
-      LSB_TO_G = 16384.0;
-      break;
-    case 4:
-      mpu.setFullScaleAccelRange(MPU6050_ACCEL_FS_4);
-      LSB_TO_G = 8192.0;
-      break;
-    case 8:
-      mpu.setFullScaleAccelRange(MPU6050_ACCEL_FS_8);
-      LSB_TO_G = 4096.0;
-      break;
-    case 16:
-      mpu.setFullScaleAccelRange(MPU6050_ACCEL_FS_16);
-      LSB_TO_G = 2048.0;
-      break;
-    default:
-      Serial.println("Invalid ACCEL_RANGE. Defaulting to 2g.");
-      mpu.setFullScaleAccelRange(MPU6050_ACCEL_FS_2);
-      LSB_TO_G = 16384.0;
-      break;
-  }
-  LSB_TO_MG = 1000.0 / LSB_TO_G; // Convert to milligrams
-
-  switch (GYRO_RANGE) {
-    case 250:
-      mpu.setFullScaleGyroRange(MPU6050_GYRO_FS_250);
-      LSB_TO_DPS = 131.0;
-      break;
-    case 500:
-      mpu.setFullScaleGyroRange(MPU6050_GYRO_FS_500);
-      LSB_TO_DPS = 65.5;
-      break;
-    case 1000:
-      mpu.setFullScaleGyroRange(MPU6050_GYRO_FS_1000);
-      LSB_TO_DPS = 32.8;
-      break;
-    case 2000:
-      mpu.setFullScaleGyroRange(MPU6050_GYRO_FS_2000);
-      LSB_TO_DPS = 16.4;
-      break;
-    default:
-      Serial.println("Invalid GYRO_RANGE. Defaulting to 250dps.");
-      mpu.setFullScaleGyroRange(MPU6050_GYRO_FS_250);
-      LSB_TO_DPS = 131.0;
-      break;
-  }
-  LSB_TO_MDPS = 1000.0 / LSB_TO_DPS; // Convert to millidegrees per second
-}
-
 // Callback to handle notifications for LEFT HAND
 class LeftHandCallback : public BLEClientCallbacks {
   void onConnect(BLEClient* pClient) {
@@ -198,9 +155,9 @@ void leftNotificationCallback(BLERemoteCharacteristic* pCharacteristic, uint8_t*
   }
 
   if (receivedData == "2") {
-    blinkerControl(LEFT_COMMAND, HIGH);
+    blinkerControl(LEFT, HIGH);
   } else if (receivedData == "1") {
-    blinkerControl(LEFT_COMMAND, LOW);
+    blinkerControl(LEFT, LOW);
   }
 }
 
@@ -224,9 +181,9 @@ void rightNotificationCallback(BLERemoteCharacteristic* pCharacteristic, uint8_t
   }
 
   if (receivedData == "2") {
-    blinkerControl(RIGHT_COMMAND, HIGH);
+    blinkerControl(RIGHT, HIGH);
   } else if (receivedData == "1") {
-    blinkerControl(RIGHT_COMMAND, LOW);
+    blinkerControl(RIGHT, LOW);
   }
 }
 
@@ -257,6 +214,28 @@ BLEClient* connectToServer(const char* address, BLEClientCallbacks* clientCallba
     Serial.println(address);
   }
   return client;
+}
+
+// Function to get circular buffer values starting at buffer_index
+void getCircularBufferValues(int32_t buffer[], int bufferIndex, int32_t output[]) {
+    // Check if buffer is empty
+    if (buffer == NULL) return;
+
+    // Loop through the buffer and copy the values starting from bufferIndex
+    for (int i = 0; i < BUFFER_SIZE; i++) {
+        // Calculate the circular index using modulo operation
+        output[i] = buffer[(bufferIndex + i) % BUFFER_SIZE];
+    }
+}
+
+// Function that checks if all values in the buffer are below the threshold
+bool are_all_below_threshold(float dy_buffer[], float threshold = 2.0) {
+    for (int i = 0; i < BUFFER_SIZE; i++) {
+        if (dy_buffer[i] >= threshold) {
+            return false;  // Return false if any value exceeds or equals the threshold
+        }
+    }
+    return true;  // All values are below the threshold
 }
 
 void setup() {
@@ -312,12 +291,14 @@ void setup() {
   devStatus = mpu.dmpInitialize();
 
   // supply your own gyro offsets here, scaled for min sensitivity
-  mpu.setXGyroOffset(51);
-  mpu.setYGyroOffset(8);
-  mpu.setZGyroOffset(21);
-  mpu.setXAccelOffset(1150);
-  mpu.setYAccelOffset(-50);
-  mpu.setZAccelOffset(1060);
+  mpu.setXGyroOffset(-6369);
+  mpu.setYGyroOffset(2248);
+  mpu.setZGyroOffset(3424);
+  mpu.setXAccelOffset(-123);
+  mpu.setYAccelOffset(-100);
+  mpu.setZAccelOffset(46);
+  // -6369.00000,	2248.00000,	3424.00000,	-123.00000,	-100.00000,	46.00000
+  
   // make sure it worked (returns 0 if so)
   if (devStatus == 0) {
     // Calibration Time: generate offsets and calibrate our MPU6050
@@ -328,7 +309,7 @@ void setup() {
     // turn on the DMP, now that it's ready
     Serial.println(F("Enabling DMP..."));
     mpu.setDMPEnabled(true);
-
+    
     // enable Arduino interrupt detection
     Serial.print(F("Enabling interrupt detection (Arduino external interrupt "));
     Serial.print(digitalPinToInterrupt(INTERRUPT_PIN));
@@ -381,28 +362,119 @@ void loop() {
     // read a packet from FIFO
     if (mpu.dmpGetCurrentFIFOPacket(fifoBuffer)) { // Get the Latest packet 
     
+      #ifdef OUTPUT_READABLE_EULER
+      // display Euler angles in degrees
+      mpu.dmpGetQuaternion(&q, fifoBuffer);
+      mpu.dmpGetEuler(euler, &q);
+
+      if (isBlinkingR || isBlinkingL){
+        if (isFirstBlink){
+          startYaw = euler[0] * 180 / M_PI;
+          isFirstBlink = false;
+        }
+        dy_buffer[bufferIndex] = abs(euler[0] * 180 / M_PI - prevYaw);
+        prevYaw = euler[0] * 180 / M_PI;
+        bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;
+        if (BLEConnected){
+          if(DEBUG){
+            String data = String(startYaw) + "+-" + String(TURN_ANGLE_THRESHOLD) + "\t" + String(euler[0] * 180 / M_PI) + "\t"
+                        + String(isTurning) + "\t" + String(isBlinkingL) + "\t" + String(isBlinkingR) + "\t" ;
+            
+            for (int i = 0; i < BUFFER_SIZE; i++){
+              data += "," + String(dy_buffer[i]);
+            }
+
+            // Send data to the connected BLE client
+            pCharacteristic->setValue(data.c_str());
+            pCharacteristic->notify();
+          }
+        }
+        if (!isTurning){
+          float delta_yaw = (euler[0] * 180 / M_PI) - startYaw;
+          if (isBlinkingR && delta_yaw >= TURN_ANGLE_THRESHOLD){
+            isTurning = true;
+          }else if (isBlinkingL && delta_yaw <= -TURN_ANGLE_THRESHOLD){
+            isTurning = true;
+          }
+        }else{
+          if (are_all_below_threshold(dy_buffer, 0.05)){
+            isTurning = false;
+            blinkerControl(LEFT, LOW);
+            blinkerControl(RIGHT, LOW);
+          }
+        }
+      }
+
+      if (BLEConnected){
+        if(ENABLE_DEBUG_PRINT_IMU_BLE){
+          String data = String(euler[0] * 180 / M_PI) + "," 
+                      + String(euler[1] * 180 / M_PI) + "," 
+                      + String(euler[2] * 180 / M_PI);
+          // Send data to the connected BLE client
+          pCharacteristic->setValue(data.c_str());
+          pCharacteristic->notify();
+        }
+      }
+
+      if (ENABLE_DEBUG_PRINT_IMU) {
+        Serial.print("euler\t");
+        Serial.print(euler[0] * 180 / M_PI);
+        Serial.print("\t");
+        Serial.print(euler[1] * 180 / M_PI);
+        Serial.print("\t");
+        Serial.println(euler[2] * 180 / M_PI);
+      }
+      #endif
+
       #ifdef OUTPUT_READABLE_YAWPITCHROLL
       // display Euler angles in degrees
       mpu.dmpGetQuaternion(&q, fifoBuffer);
       mpu.dmpGetGravity(&gravity, &q);
       mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-      
-      Serial.print("ypr\t");
-      Serial.print(ypr[0] * 180 / M_PI);
-      Serial.print("\t");
-      Serial.print(ypr[1] * 180 / M_PI);
-      Serial.print("\t");
-      Serial.print(ypr[2] * 180 / M_PI);
 
+      if (isBlinkingR || isBlinkingL){
+        float dy = (ypr[0] * 180 / M_PI) - prevYaw;
+        dy_buffer[bufferIndex] = dy;
+        bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;
+
+        if (!isTurning){
+          if (dy > 3.0 && isBlinkingR){
+            isTurning = true;
+          }else if (dy < -3.0 && isBlinkingL){
+            isTurning = true;
+          }
+        }else{
+          if (are_all_below_threshold(dy_buffer, 1.0)){
+            isTurning = false;
+            blinkerControl(LEFT, LOW);
+            blinkerControl(RIGHT, LOW);
+          }
+        }
+        if(DEBUG){
+          String data = String(dy_buffer[0]) + "," + String(dy_buffer[1]) + "," + String(dy_buffer[2]) + "," + String(dy_buffer[3]) + "," + String(dy_buffer[4]) + "," + String(isTurning) + "," + String(dy) + "," + String(isBlinkingL) + "," + String(isBlinkingR) + "," + String(ypr[0] * 180 / M_PI);
+          // Send data to the connected BLE client
+          pCharacteristic->setValue(data.c_str());
+          pCharacteristic->notify();
+        }
+      }
 
       if (BLEConnected){
-        String data = String(ypr[0] * 180 / M_PI) + "," + String(ypr[1] * 180 / M_PI) + "," + String(ypr[2] * 180 / M_PI);
-        // Send data to the connected BLE client
-        pCharacteristic->setValue(data.c_str());
-        pCharacteristic->notify();
+        if(ENABLE_DEBUG_PRINT_IMU_BLE){
+          String data = String(ypr[0] * 180 / M_PI) + "," + String(ypr[1] * 180 / M_PI) + "," + String(ypr[2] * 180 / M_PI);
+          // Send data to the connected BLE client
+          pCharacteristic->setValue(data.c_str());
+          pCharacteristic->notify();
+        }
       }
 
       if (ENABLE_DEBUG_PRINT_IMU) {
+        Serial.print("ypr\t");
+        Serial.print(ypr[0] * 180 / M_PI);
+        Serial.print("\t");
+        Serial.print(ypr[1] * 180 / M_PI);
+        Serial.print("\t");
+        Serial.print(ypr[2] * 180 / M_PI);
+
         mpu.dmpGetAccel(&aa, fifoBuffer);
         Serial.print("\tRaw Accl XYZ\t");
         Serial.print(aa.x);
@@ -417,8 +489,9 @@ void loop() {
         Serial.print(gy.y);
         Serial.print("\t");
         Serial.print(gy.z);
+        Serial.println();
       }
-      Serial.println();
+      prevYaw = ypr[0] * 180 / M_PI;
       #endif
       
       // blink LED to indicate activity
@@ -452,22 +525,23 @@ void loop() {
 // Example functions to control blinkers
 void blinkerControl(int side, int newState){
   long int currentMillis = millis();
-  long int delta_time = currentMillis- prev_millis_blink_command;
-  if (side == LEFT_COMMAND)
+  long int delta_time = currentMillis - prev_millis_blink_command;
+  if (side == LEFT)
   {
-    if (newState == HIGH && delta_time > 500)
+    if (delta_time > 500)
     {
       isBlinkingR = LOW;
     }
     isBlinkingL = newState;
   } 
-  else if (side == RIGHT_COMMAND)
+  else if (side == RIGHT)
   {
-    if (newState == HIGH && delta_time > 500)
+    if (delta_time > 500)
     {
       isBlinkingL = LOW;
     }
     isBlinkingR = newState;
   }
   prev_millis_blink_command = currentMillis;
+  isFirstBlink = true;
 }
