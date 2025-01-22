@@ -9,7 +9,21 @@ The ToF approach uses the `SATEL-VL53L8CX` multi-zone distance sensor to detect 
 - **Visualization and Data Archiving**  
   - Connects via BLE and serial interfaces to archive gesture data in JSON or CSV formats.  
 - **Neural Network Integration**  
-  - Train a neural network to classify gestures (e.g., Left, Right, None).  
+  - Train a neural network to classify gestures (e.g., Left, Right, None).
+
+## Feature list
+
+1. [x] VL53L8CX connection
+    1. [x] STM32
+    2. [x] ESP32
+2. [ ] PC connection and GUI
+    1. [x] TOF_serial_GUI
+    2. [x] BLE_to_CSV
+    3. [ ] TOF_BLE_GUI (Unstable)
+3. [x] ROS Navigation Stack
+    1. [x] Sub-task 1
+    2. [x] Sub-task 2
+
 
 
 # VL53L8CX Connection
@@ -267,15 +281,188 @@ async def scan_ble_devices():
 ![BLE_GUI](img/ble_gui.png)
 
 
-Sometimes we got issues with asyncio and tkinter running simultaneously even with the use of threading
+Sometimes we got issues with asyncio and tkinter running simultaneously even with the use of threading so in case we create [BLE_to_CSV](Data_processing/BLE_to_CSV.py)
+It's a light version of TOF_BLE_GUI without the tkinter interface, so we got a backup plan and get the csv anyways.
 
 ## DATA
 
+Now that we got our data we have to create our neural network so it automatically knows thanks to the sensor values when to activate the blinkers. 
+We got csv data that display sensor values [values.csv](Data_processing/Archives_csv/fichier_test1.csv) and also video of what the captor is viewing [values.mp4](vid/fichier_test1.mp4).
+
+Now we habe to link these two together so we can add label to our data
+
 ### Timestamp
 
-### mp4_to_frames
+First we need to see if the timestamp of ou video is the same as our data so we create [timestamp.py](Data_processing/timestamp.py), we use hachoir library to get metadata out of the file. 
+
+Example : 
+
+```python
+python3 timestamp.py 
+```
+```python
+Entrez le chemin du fichier MP4 : TOF/vid/fichier_test1.mp4
+Date de création de la vidéo : 2025-01-13 13:27:35
+```
+
+### mp4_to_frames 
+
+This code extracts frames from a video file and calculates the timestamp for each frame. It opens the MP4 file, retrieves the total number of frames and the frames per second (FPS), then iterates through each frame, calculating and printing its timestamp. Finally, the video file is closed. This ones help us when debug.
+
+### Gui couple
+
+Finally we creat another GUI to help us labelize the data, [Gui_couple](Data_processing/GUI_couple.py) links together a csv files and a mp4 files so we get the visualisation grid and the corresponding frames, this code then allow us to labelize our data with differents labels such as righ_arm, left_arm, nothing.
+
+First we load both files, 
+
+```python
+def load_csv():
+    filepath = filedialog.askopenfilename(
+        title="Sélectionner un fichier CSV",
+        filetypes=[("CSV files", "*.csv")]
+    )
+    if not filepath:
+        file_label.config(text="Aucun fichier choisi")
+        return
+    try:
+        with open(filepath, "r") as file:
+            reader = csv.reader(file)
+            global data, new_csv_path, labeled_data
+            data = list(reader)
+            timestamps = [row[0] for row in data if row]  # Collecte les timestamps
+            timestamp_dropdown['values'] = timestamps
+            file_label.config(text=f"Fichier choisi : {filepath.split('/')[-1]}")
+
+            # Créer le dossier `data_label` s'il n'existe pas
+            os.makedirs("data_label", exist_ok=True)
+
+            # Chemin pour le nouveau fichier CSV
+            import datetime
+            timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
+            new_csv_path = os.path.join("data_label", f"labeled_data_{timestamp}.csv")
+            
+            # Charger les données existantes dans le dictionnaire
+            if os.path.exists(new_csv_path):
+                with open(new_csv_path, "r") as labeled_file:
+                    labeled_reader = csv.reader(labeled_file)
+                    next(labeled_reader, None)  # Sauter l'en-tête
+                    labeled_data = {row[0]: row[1] for row in labeled_reader}
+
+            # Créer le fichier si ce n'est pas encore fait
+            else:
+                with open(new_csv_path, "w", newline="") as new_file:
+                    writer = csv.writer(new_file)
+                    writer.writerow(["Data", "Label"])  # Entêtes
+
+            print("Succès", "Fichier CSV chargé avec succès.")
+    except Exception as e:
+        messagebox.showerror("Erreur", f"Impossible de charger le fichier : {e}")
+
+def load_mp4():
+    filepath = filedialog.askopenfilename(
+        title="Sélectionner un fichier MP4",
+        filetypes=[("MP4 files", "*.mp4")]
+    )
+    if not filepath:
+        mp4_file_label.config(text="Aucun fichier MP4 choisi")
+        return
+    mp4_file_label.config(text=f"Fichier MP4 choisi : {filepath.split('/')[-1]}")
+    print("Succès", "Fichier MP4 chargé avec succès.")
+
+```
+
+Then we select our timestamp this will update our grid and take the corresponding frame in the mp4 files.
+
+```python
+    """
+    Extrait une frame d'un fichier MP4 à un timestamp donné en prenant en compte le timestamp
+    de création de la vidéo et le timestamp du CSV.
+    """
+    # Récupérer la date de création du fichier vidéo
+    video_creation_time = get_video_timestamp(mp4_filepath)
+    print("video_norm")
+    print(normalize_timestamp(video_creation_time))
+    # Convertir le timestamp du CSV en datetime
+    timestamp = datetime.fromisoformat(timestamp_str)
+    print("csv_norm")
+    print(normalize_timestamp(timestamp))
+    # Calculer la différence entre le timestamp du CSV et la date de création de la vidéo
+    time_diff = normalize_timestamp(timestamp) - normalize_timestamp(video_creation_time)
+    print(time_diff)
+
+    # Convertir cette différence en secondes
+    timestamp_seconds = time_diff.total_seconds()
+
+    # Ouvrir le fichier MP4
+    cap = cv2.VideoCapture(mp4_filepath)
+    if not cap.isOpened():
+        print("Erreur d'ouverture du fichier MP4")
+        return None
+
+    # Calculer le numéro du frame en fonction du timestamp
+    fps = cap.get(cv2.CAP_PROP_FPS)  # Nombre d'images par seconde
+    frame_number = int(fps * timestamp_seconds)
+    print("test3")
+    print(frame_number)
+
+    # Vérifier si le numéro de la frame est dans les limites de la vidéo
+    total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+    if frame_number < 0:
+        frame_number = 0  # Ne pas aller avant le début de la vidéo
+    elif frame_number >= total_frames:
+        frame_number = total_frames - 1  # Ne pas dépasser la dernière frame
+
+    # Lire la frame à l'index calculé
+    cap.set(cv2.CAP_PROP_POS_FRAMES, frame_number)
+    ret, frame = cap.read()
+
+    cap.release()
+    if ret:
+        return frame
+    else:
+        print(f"Impossible d'extraire la frame à {timestamp_str}")
+        return None
+```
+
+we got to normalize timestamp so we can get the nearest frames corresponding to our sensor values. Now we can view both the grid our csv data and the corresponding image, we add three button on the gui to help labelize (press a label button got to the next timestamp automatically, also you can label one timestamp multiple times but only the last one will remain).
+```python
+def save_label(label):
+    """
+    Sauvegarde ou met à jour les données actuelles de `text_area` avec le label donné dans le fichier CSV.
+    """
+    global new_csv_path, labeled_data
+    try:
+        data_to_save = text_area.get("1.0", tk.END).strip()  # Récupère le texte de la zone de texte
+        if not data_to_save:
+            messagebox.showwarning("Attention", "Aucune donnée à sauvegarder.")
+            return
+        
+        select_next_timestamp()
+
+        # Vérifier si les données existent déjà
+        if data_to_save in labeled_data:
+            labeled_data[data_to_save] = label  # Mettre à jour le label
+            print("Mise à jour", f"Le label a été mis à jour pour '{data_to_save}'.")
+        else:
+            labeled_data[data_to_save] = label  # Ajouter une nouvelle entrée
+            print("Succès", f"Données enregistrées avec le label '{label}'.")
+
+        # Écrire les données dans le fichier CSV
+        with open(new_csv_path, "w", newline="") as file:
+            writer = csv.writer(file)
+            writer.writerow(["Data", "Label"])  # Réécrire l'en-tête
+            for data, lbl in labeled_data.items():
+                writer.writerow([data, lbl])
+```
+
+[Example here](vid/labelling_data.mp4)
+
+This created labelize data in our data_label folder.
+For training we will merge all this files into one [data.csv](Data_processing/data.csv)
 
 ### Entrainement
+
+
 
 ## Version
 
@@ -283,6 +470,11 @@ Sometimes we got issues with asyncio and tkinter running simultaneously even wit
 
 ### V2
 
+## TO DO
+
+### V3 Implementation
+
+### V4 avec les range en fonction de la hauteur
 
 [Here's the Result](vid/capteur_tof.mp4)
 
@@ -295,47 +487,6 @@ Sometimes we got issues with asyncio and tkinter running simultaneously even wit
 
 
 
-stty -F /dev/ttyACM0 460800 
-cat /dev/ttyACM0
-
-  - Baud Rate: 460800
-  - Data Bits: 8
-  - Parity: None
-  - Stop Bits: 1
-
-Connéxion au TOF visualisation des valeurs.
-Valeur capteur TOF : capteur_valor.png
-
-création du tof GUI (Graphique user interface) en connectique serial (vidéo capteur_tof)
-
-debut du portage en connectique BLE
-
-08/01
-
-Essais connectique uart entre stm32 et ESP32 marche pas 
-début du portage VL53L5CX avec ESP32
-Utilisation d'un boust pour passer du 3.3V de la ESP32 au 5V du TOF
-Essai avec la stm32 le tof ne fonctionne pas en 3,3V
-Branchement et code : https://github.com/stm32duino/VL53L8CX/blob/main/examples/VL53L8CX_HelloWorld_I2C/VL53L8CX_HelloWorld_I2C.ino
-
-09/01
-
-TOF fonctionel avec la TTGO T dispay
-
-10/01 
-connection TOF BLE fonctionel 
-GUI fonctionnel fichuier csv fonctionel
-
-13/01
-
-GUI Couple
-attention ajout d'un time delta (d'une heure dans get_video-timestamp) car probleme d'enregistrement et décalage d'un heure
-
-14/01
-Modification de GUI couple pour pouvoir labélisé les données et créer un nouveau fichier csv
-
-16/01
-BLE_CSV car TOF BLE probléme non résolvable.
 
 17/01 
 création du support pour les cartest de test
@@ -348,10 +499,6 @@ TODO :
 
  - Canva
  - ReadMe :
-
- TO DO
- V3 avec les range en fonction de la hauteur
- Implementation
 
  Listes des fonctionnalités :
 
@@ -373,18 +520,6 @@ a
 b
 n
 
- - Code propre
  - Vidéo présentation
  - Vidéo mise en place Montage et voice over
- comment flash esp32 à faire
- comment flash stm32 (alix)
- Mise en place physique
-
- - modélisation 3D pour le support
-
-
-Source : https://github.com/nkolban/ESP32_BLE_Arduino
-
-![IMU System Diagram](img/imu_illustration2.drawio)
-
 
