@@ -5,6 +5,8 @@
 #include <BLE2902.h>
 #include "I2Cdev.h"
 #include "MPU6050_6Axis_MotionApps612.h"
+#include <Adafruit_NeoPixel.h>
+
 // Arduino Wire library is required if I2Cdev I2CDEV_ARDUINO_WIRE implementation
 // is used in I2Cdev.h
 #if I2CDEV_IMPLEMENTATION == I2CDEV_ARDUINO_WIRE
@@ -26,10 +28,6 @@
 #define LEFT_HAND_ADDRESS "CC:DB:A7:92:9F:0E"
 #define RIGHT_HAND_ADDRESS "F8:B3:B7:22:2E:3A"
 
-// Pins pour les LEDs de clignotement
-#define LEFT_BLINKER_PIN 18
-#define RIGHT_BLINKER_PIN 19
-
 #define LEFT 0
 #define RIGHT 1
 
@@ -37,6 +35,10 @@
 #define ACCEL_RANGE 4   // Options: 2, 4, 8, 16 (en g)
 #define GYRO_RANGE 500  // Options: 250, 500, 1000, 2000 (en °/s)
 #define ODR_IMU 52      // Options: 12.5, 26, 52, 104, 208, 416, 833 (en Hz)
+
+// Configuration du strip LED
+#define LED_STRIP_PIN  5          // Broche de données connectée au Din
+#define NUM_LEDS    6       // Nombre de LEDs sur ton strip
 
 // Variables pour l'échelle
 float LSB_TO_G;
@@ -61,6 +63,7 @@ boolean isFirstBlink = true;
 float startYaw = 0;
 #define TURN_ANGLE_THRESHOLD 20
 
+Adafruit_NeoPixel strip(NUM_LEDS, LED_STRIP_PIN, NEO_GRBW + NEO_KHZ800);
 
 // BLE client variables
 BLEClient* leftClient = nullptr;
@@ -336,11 +339,8 @@ void setup() {
   // configure LED for output
   pinMode(LED_PIN, OUTPUT);
 
-  // Initialisation des LEDs
-  pinMode(LEFT_BLINKER_PIN, OUTPUT);
-  pinMode(RIGHT_BLINKER_PIN, OUTPUT);
-  digitalWrite(LEFT_BLINKER_PIN, LOW);
-  digitalWrite(RIGHT_BLINKER_PIN, LOW);
+  strip.begin();            // Initialise le strip NeoPixel
+  strip.show();             // Éteint toutes les LEDs au démarrage
 
   // Initialisation BLE
   BLEDevice::init(BLE_DEVICE_NAME);
@@ -354,7 +354,7 @@ void setup() {
 
 void loop() {
   unsigned long currentMillis = millis();
-
+  Serial.println(String(IMUConnected));
   // Wait until connected to IMU
   if (IMUConnected) {
     // if programming failed, don't try to do anything
@@ -424,75 +424,7 @@ void loop() {
         Serial.print("\t");
         Serial.println(euler[2] * 180 / M_PI);
       }
-      #endif
-
-      #ifdef OUTPUT_READABLE_YAWPITCHROLL
-      // display Euler angles in degrees
-      mpu.dmpGetQuaternion(&q, fifoBuffer);
-      mpu.dmpGetGravity(&gravity, &q);
-      mpu.dmpGetYawPitchRoll(ypr, &q, &gravity);
-
-      if (isBlinkingR || isBlinkingL){
-        float dy = (ypr[0] * 180 / M_PI) - prevYaw;
-        dy_buffer[bufferIndex] = dy;
-        bufferIndex = (bufferIndex + 1) % BUFFER_SIZE;
-
-        if (!isTurning){
-          if (dy > 3.0 && isBlinkingR){
-            isTurning = true;
-          }else if (dy < -3.0 && isBlinkingL){
-            isTurning = true;
-          }
-        }else{
-          if (are_all_below_threshold(dy_buffer, 1.0)){
-            isTurning = false;
-            blinkerControl(LEFT, LOW);
-            blinkerControl(RIGHT, LOW);
-          }
-        }
-        if(DEBUG){
-          String data = String(dy_buffer[0]) + "," + String(dy_buffer[1]) + "," + String(dy_buffer[2]) + "," + String(dy_buffer[3]) + "," + String(dy_buffer[4]) + "," + String(isTurning) + "," + String(dy) + "," + String(isBlinkingL) + "," + String(isBlinkingR) + "," + String(ypr[0] * 180 / M_PI);
-          // Send data to the connected BLE client
-          pCharacteristic->setValue(data.c_str());
-          pCharacteristic->notify();
-        }
-      }
-
-      if (BLEConnected){
-        if(ENABLE_DEBUG_PRINT_IMU_BLE){
-          String data = String(ypr[0] * 180 / M_PI) + "," + String(ypr[1] * 180 / M_PI) + "," + String(ypr[2] * 180 / M_PI);
-          // Send data to the connected BLE client
-          pCharacteristic->setValue(data.c_str());
-          pCharacteristic->notify();
-        }
-      }
-
-      if (ENABLE_DEBUG_PRINT_IMU) {
-        Serial.print("ypr\t");
-        Serial.print(ypr[0] * 180 / M_PI);
-        Serial.print("\t");
-        Serial.print(ypr[1] * 180 / M_PI);
-        Serial.print("\t");
-        Serial.print(ypr[2] * 180 / M_PI);
-
-        mpu.dmpGetAccel(&aa, fifoBuffer);
-        Serial.print("\tRaw Accl XYZ\t");
-        Serial.print(aa.x);
-        Serial.print("\t");
-        Serial.print(aa.y);
-        Serial.print("\t");
-        Serial.print(aa.z);
-        mpu.dmpGetGyro(&gy, fifoBuffer);
-        Serial.print("\tRaw Gyro XYZ\t");
-        Serial.print(gy.x);
-        Serial.print("\t");
-        Serial.print(gy.y);
-        Serial.print("\t");
-        Serial.print(gy.z);
-        Serial.println();
-      }
-      prevYaw = ypr[0] * 180 / M_PI;
-      #endif
+      #endif      
       
       // blink LED to indicate activity
       blinkState = !blinkState;
@@ -500,17 +432,18 @@ void loop() {
     }
   }
 
-  // Gestion du clignotement des LEDs
+  // Clignotant gauche
   if (isBlinkingL) {
-    digitalWrite(LEFT_BLINKER_PIN, (currentMillis % BLINKER_PERIOD) < BLINKER_PERIOD / 2);
-  } else {
-    digitalWrite(LEFT_BLINKER_PIN, LOW);
+    animateBlinker(currentMillis, false); // Animation droite à gauche
+  } else if (!isBlinkingR) {
+    clearStrip();
   }
 
+  // Clignotant droit
   if (isBlinkingR) {
-    digitalWrite(RIGHT_BLINKER_PIN, (currentMillis % BLINKER_PERIOD) < BLINKER_PERIOD / 2);
-  } else {
-    digitalWrite(RIGHT_BLINKER_PIN, LOW);
+    animateBlinker(currentMillis, true); // Animation gauche à droite
+  } else if (!isBlinkingL) {
+    clearStrip();
   }
 
   // Reconnexion si nécessaire
@@ -544,4 +477,36 @@ void blinkerControl(int side, int newState){
   }
   prev_millis_blink_command = currentMillis;
   isFirstBlink = true;
+}
+
+// Fonction pour animer les clignotants
+void animateBlinker(unsigned long currentMillis, bool directionRight) {
+  // Couleur orange
+  uint32_t orange = strip.Color(255, 50, 0);
+
+  // Calcul de l'étape en fonction du temps
+  int step = (currentMillis / (BLINKER_PERIOD / NUM_LEDS)) % NUM_LEDS;
+
+  // Effacement du strip
+  strip.clear();
+
+  // Animation dans la bonne direction
+  if (directionRight) {
+    for (int i = 0; i <= step; i++) {
+      strip.setPixelColor(i, orange); // Allume les LEDs de gauche à droite
+    }
+  } else {
+    for (int i = NUM_LEDS - 1; i >= NUM_LEDS - 1 - step; i--) {
+      strip.setPixelColor(i, orange); // Allume les LEDs de droite à gauche
+    }
+  }
+
+  // Met à jour l'affichage des LEDs
+  strip.show();
+}
+
+// Fonction pour éteindre toutes les LEDs
+void clearStrip() {
+  strip.clear();
+  strip.show();
 }
