@@ -98,21 +98,19 @@ This project aims to activate turn signals (blinkers) for electric unicycles (EU
     └── ...
 ```
 
+## Presentation Videos
 
-# Vidéos de présentation
+[Link to the YouTube pitch video](url)
 
-[Lien vers la vidéo pitch youtube](url)
+[Link to the YouTube tutorial video](url)
 
-[Lien vers la vidéo tutoriel youtube](url)
+## List of Dependencies and Prerequisites
 
-# Liste des dépendances et pré-requis
-
-- ([ESP32-duino](https://github.com/stm32duino/VL53L8CX/blob/main/examples/VL53L8CX_HelloWorld_I2C/VL53L8CX_HelloWorld_I2C.ino
-))
+- ([STM32-duino](https://github.com/stm32duino/VL53L8CX/blob/main/examples/VL53L8CX_HelloWorld_I2C/VL53L8CX_HelloWorld_I2C.ino))
 - [X-CUBE-TOF1](https://www.st.com/en/ecosystems/x-cube-tof1.html)
 - requirements.txt
 
-# Procédure de mise en route
+## Startup Procedure
 
 - a
 - b
