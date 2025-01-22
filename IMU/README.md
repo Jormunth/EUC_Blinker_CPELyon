@@ -1,13 +1,13 @@
 # IMU Solution  
 ## System Description  
 The IMU-based system consists of three main components:  
-1. A central module (ESP32-WROOM microcontroller and IMU).  
+1. A central module (ESP32-WROOM microcontroller and MPU-6050 IMU).  
 2. Two hand modules (each with an ESP32-WROOM microcontroller and an MPU-6050 IMU).  
 
 Each hand module collects accelerometer and gyroscope data and sends it via BLE to the central unit, which processes the data and controls the blinkers.
 
 ![IMU System Diagram](img/MEMS_system_diagram.png)
-![IMU System Diagram](img/imu_illustration2.jpg)
+![IMU System Diagram](img/illustration_imu2.png)
 
 ## Features and Progress  
 - **Data Visualization**  
@@ -25,11 +25,32 @@ Each hand module collects accelerometer and gyroscope data and sends it via BLE 
   - Miniaturize components and enable induction charging. 
 
 --- 
+
+## Setup
+
+### Environment 
+
+#### Arduino IDE setup
+
+Link to add in File > Preferences > Additional boards manager URLs :
+
+```
+https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+```
+
+Link for downloading MPU6050 library:
+
+```
+https://minhaskamal.github.io/DownGit/#/home
+https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/MPU6050
+```
+
 ## Notes
 
 Utilisation de MEMS Studio afin de generer un decision tree a partir des donnees IMU, FAILED algo fait main
 mems studio features:
-F1_MEAN_ACC_Z",
+
+        "F1_MEAN_ACC_Z",
         "F2_MINIMUM_ACC_Z",
         "F3_VARIANCE_ACC_Y",
         "F4_MEAN_GYR_V",
