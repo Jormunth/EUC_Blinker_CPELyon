@@ -115,10 +115,20 @@ Modification de GUI COuple pour support windows et labellisation des données
 
 TODO : 
 
- - labelissation
- - créer un fichier csv à partir des autres
- - Entrainement
- - Implémentation
+ - Canva
+ - ReadMe : 
+ STM 32 VL53L8CX // GUI serial // ESP 32 VL53L8CX // TOP BLE GUI // BLE to csv // Partie DATA : 
+ timestamp // mp4 to frames GUI couple // entrainement
+ V1
+ V2
+ V3 avec les range en fonction de la hauteur
+ - Code propre
+ - Vidéo présentation
+ - Vidéo mise en place 
+ comment flash esp32 à faire
+ comment flash stm32 (alix)
+ Mise en place physique
+
  - modélisation 3D pour le support
 
 
