@@ -45,6 +45,10 @@ https://minhaskamal.github.io/DownGit/#/home
 https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/MPU6050
 ```
 
+## Usage tutorial
+
+![](vid/usageTutorial.mp4)
+
 ## Notes
 
 Utilisation de MEMS Studio afin de generer un decision tree a partir des donnees IMU, FAILED algo fait main
