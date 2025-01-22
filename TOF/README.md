@@ -20,9 +20,17 @@ The ToF approach uses the `SATEL-VL53L8CX` multi-zone distance sensor to detect 
     1. [x] TOF_serial_GUI
     2. [x] BLE_to_CSV
     3. [ ] TOF_BLE_GUI (Unstable)
-3. [x] ROS Navigation Stack
-    1. [x] Sub-task 1
-    2. [x] Sub-task 2
+3. [x] DATA
+    1. [x] Labellize
+        1. [x] Timestamp
+        2. [x] mp4_to_frames
+        3. [x] Gui_couple
+    2. [x] Training
+4. [ ] Final Product
+    1. [x] V0
+    2. [x] V1
+    3. [ ] V2
+    4. [ ] Training
 
 
 
@@ -462,19 +470,171 @@ For training we will merge all this files into one [data.csv](Data_processing/da
 
 ### Entrainement
 
+We finally get our labelled data we can now train our model for we can now use [Entrainement.py](Data_processing/Entrainement.py) to create a model designed to be implemented on our STM32F4 (originally planned on na STM32N6)
 
+This code performs three main functions:
 
-## Version
+Data Loading and Preparation: It reads a CSV file, cleans and processes the data (handling non-numeric values and missing data), and encodes the labels into a one-hot format for use in machine learning models.
+
+```python
+def load_and_prepare_data(csv_file):
+    # Lire le fichier CSV
+    data = pd.read_csv(csv_file, header=None)
+
+    # Remplacement des valeurs non numériques (exemple: "X:X")
+    data.replace({'X:X': 0, 'X': 0}, inplace=True)  # Ajoutez d'autres motifs si nécessaire
+
+    # Conversion des colonnes d'entrée en type float, en gérant les erreurs
+    try:
+        features = data.iloc[:, :-1].apply(pd.to_numeric, errors='coerce').fillna(0)
+    except Exception as e:
+        print("Erreur lors de la conversion des features :", e)
+        raise
+
+    # Traitement des étiquettes (dernière colonne)
+    labels = data.iloc[:, -1].astype(str)  # Convertir les étiquettes en chaînes si nécessaire
+    label_encoder = LabelEncoder()
+    encoded_labels = label_encoder.fit_transform(labels)
+    categorical_labels = to_categorical(encoded_labels)  # Encodage one-hot
+
+    return features, categorical_labels, label_encoder.classes_
+```
+
+Model Training: It builds and trains a neural network using TensorFlow/Keras with a specified architecture to classify the processed data.
+
+```python
+def train_model(features, labels):
+    input_dim = features.shape[1]
+    output_dim = labels.shape[1]
+    model = Sequential([
+        Dense(128, input_dim=input_dim, activation='relu'),
+        Dense(64, activation='relu'),
+        Dense(output_dim, activation='softmax')
+    ])
+    model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
+    model.fit(features, labels, epochs=10, batch_size=32, validation_split=0.2)
+    return model
+```
+
+Model Conversion and Export: It converts the trained model to TensorFlow Lite format and generates C code to embed the model for deployment, particularly on STM32 microcontrollers.
+
+```python
+def convert_to_tflite_and_export(model, output_dir):
+    # Créer le répertoire de sortie s'il n'existe pas
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+        print(f"Répertoire créé : {output_dir}")
+
+    # Convertir le modèle en TFLite
+    converter = tf.lite.TFLiteConverter.from_keras_model(model)
+    tflite_model = converter.convert()
+
+    # Sauvegarder le modèle TFLite
+    tflite_path = os.path.join(output_dir, "model.tflite")
+    with open(tflite_path, "wb") as f:
+        f.write(tflite_model)
+
+    print(f"Modèle TFLite exporté vers : {tflite_path}")
+    
+    # Générer un fichier C
+    with open(f"{output_dir}/model.cc", "w") as f:
+        tflite_hex = ', '.join(f'0x{b:02x}' for b in tflite_model)
+        f.write(f"""
+#include <stddef.h>
+#include <stdint.h>
+
+const unsigned char model[] = {{ {tflite_hex} }};
+const size_t model_len = {len(tflite_model)};
+        """)
+```
+
+We also included tracking features that helped us review our model performances : 
+
+```python
+history = model.fit(features, labels, epochs=10, batch_size=32, validation_split=0.2)
+
+# Visualisation des performances
+plt.figure(figsize=(12, 5))
+
+# Courbe de perte
+plt.subplot(1, 2, 1)
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+
+# Courbe de précision
+plt.subplot(1, 2, 2)
+plt.plot(history.history['accuracy'], label='Train Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('Accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
+```
+
+## Final Product
+
+Here are the model that currently work first we got a version 0 with the ESP32 TTGO T-Display, this version calculates the means on right sides sensor and left sides sensor to activate the left light or the right light. [Version_0](Firmware/ESP32/ESP32_BLE_V0.ino)
+```cpp
+// Calcul des moyennes des distances pour gauche et droite
+  if ((j + i) % zones_per_line < zones_per_line / 2) { // Zones de gauche
+    left_sum += distance;
+    left_count++;
+  } else { // Zones de droite
+    right_sum += distance;
+    right_count++;
+  }
+
+  ...     
+
+  // Calcul des moyennes
+  int left_avg = (left_count > 0) ? (left_sum / left_count) : 0;
+  int right_avg = (right_count > 0) ? (right_sum / right_count) : 0;
+
+  // Allumer/éteindre les LEDs en fonction des moyennes
+  if (left_avg > 0 && left_avg < 1200) {
+    digitalWrite(LED_LEFT_PIN, HIGH);
+  } else {
+    digitalWrite(LED_LEFT_PIN, LOW);
+  }
+
+  if (right_avg > 0 && right_avg < 1200) {
+    digitalWrite(LED_RIGHT_PIN, HIGH);
+  } else {
+    digitalWrite(LED_RIGHT_PIN, LOW);
+  }
+```
 
 ### V1
 
-### V2
+For the first accurate version we review the data we got from the archive and through the visualisation grid ...
 
 ## TO DO
 
-### V3 Implementation
+### V2 Implementation
 
-### V4 avec les range en fonction de la hauteur
+### V3 avec les range en fonction de la hauteur
+
+4. Implémentation sur STM32
+a) Utilisation de TensorFlow Lite Micro
+
+    Téléchargez TensorFlow Lite for Microcontrollers.
+    Intégrez le modèle quantized_model.tflite dans votre projet STM32 à l’aide de CubeIDE ou d’un environnement similaire.
+    Adaptez le code pour charger le modèle et effectuer des inférences avec vos données en utilisant les exemples fournis par TensorFlow Lite Micro.
+
+b) Exemple de structure
+
+Le fichier .tflite sera compilé et utilisé comme tableau dans le microcontrôleur.
+5. Test et validation
+
+    Déployez le code sur votre STM32F4.
+    Alimentez le réseau de neurones avec des données en temps réel et validez les prédictions.
 
 [Here's the Result](vid/capteur_tof.mp4)
 
@@ -487,39 +647,13 @@ For training we will merge all this files into one [data.csv](Data_processing/da
 
 
 
-
-17/01 
-création du support pour les cartest de test
-acquisition de données
-
-18/01 
-Modification de GUI COuple pour support windows et labellisation des données
-
 TODO : 
 
  - Canva
  - ReadMe :
-
- Listes des fonctionnalités :
-
- readme principal : 
-
- Vidéos de présentation
-Lien vers la vidéo pitch youtube
-Lien vers la vidéo tutoriel youtube
-
-Liste des dépendances et pré-requis
-
-a
-b
-
-
-Procédure de mise en route
-
-a
-b
-n
-
- - Vidéo présentation
+ V1 V2 V3
+ readme globale lien video 
+ et procédure mise en route
+ - Vidéo présentation Montage
  - Vidéo mise en place Montage et voice over
 
