@@ -21,4 +21,21 @@ The ESP32 broadcasts the accel and gyro data on BLE to the main EPS32 unit on th
 - creation d'un gui permettant de visualiser les donner
 - un script permettant de logger les donnees avec le BLE
 - blinkers des leds
-- 
+
+Utilisation de MEMS Studio afin de generer un decision tree a partir des donnees IMU, FAILED algo fait main
+mems studio features:
+F1_MEAN_ACC_Z",
+        "F2_MINIMUM_ACC_Z",
+        "F3_VARIANCE_ACC_Y",
+        "F4_MEAN_GYR_V",
+        "F5_MAXIMUM_ACC_X",
+        "F6_PEAK_TO_PEAK_ACC_Y",
+        "F7_ENERGY_GYR_Z",
+        "F8_VARIANCE_GYR_Z",
+        "F9_MAXIMUM_ACC_V",
+        "F10_MINIMUM_GYR_X",
+        "F11_MEAN_ACC_X",
+        "F12_VARIANCE_GYR_X",
+        "F13_MINIMUM_ACC_V",
+        "F14_MEAN_ACC_V",
+        "F15_ENERGY_GYR_Y"
