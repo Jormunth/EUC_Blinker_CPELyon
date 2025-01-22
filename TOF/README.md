@@ -551,14 +551,69 @@ const size_t model_len = {len(tflite_model)};
 We also included tracking features that helped us review our model performances : 
 
 ```python
+history = model.fit(features, labels, epochs=10, batch_size=32, validation_split=0.2)
 
+# Visualisation des performances
+plt.figure(figsize=(12, 5))
+
+# Courbe de perte
+plt.subplot(1, 2, 1)
+plt.plot(history.history['loss'], label='Train Loss')
+plt.plot(history.history['val_loss'], label='Validation Loss')
+plt.title('Loss')
+plt.xlabel('Epochs')
+plt.ylabel('Loss')
+plt.legend()
+
+# Courbe de précision
+plt.subplot(1, 2, 2)
+plt.plot(history.history['accuracy'], label='Train Accuracy')
+plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+plt.title('Accuracy')
+plt.xlabel('Epochs')
+plt.ylabel('Accuracy')
+plt.legend()
+
+plt.tight_layout()
+plt.show()
 ```
 
-## Version
+## Final Product
 
-### V0
+Here are the model that currently work first we got a version 0 with the ESP32 TTGO T-Display, this version calculates the means on right sides sensor and left sides sensor to activate the left light or the right light. [Version_0](Firmware/ESP32/ESP32_BLE_V0.ino)
+```cpp
+// Calcul des moyennes des distances pour gauche et droite
+  if ((j + i) % zones_per_line < zones_per_line / 2) { // Zones de gauche
+    left_sum += distance;
+    left_count++;
+  } else { // Zones de droite
+    right_sum += distance;
+    right_count++;
+  }
+
+  ...     
+
+  // Calcul des moyennes
+  int left_avg = (left_count > 0) ? (left_sum / left_count) : 0;
+  int right_avg = (right_count > 0) ? (right_sum / right_count) : 0;
+
+  // Allumer/éteindre les LEDs en fonction des moyennes
+  if (left_avg > 0 && left_avg < 1200) {
+    digitalWrite(LED_LEFT_PIN, HIGH);
+  } else {
+    digitalWrite(LED_LEFT_PIN, LOW);
+  }
+
+  if (right_avg > 0 && right_avg < 1200) {
+    digitalWrite(LED_RIGHT_PIN, HIGH);
+  } else {
+    digitalWrite(LED_RIGHT_PIN, LOW);
+  }
+```
 
 ### V1
+
+For the first accurate version we review the data we got from the archive and through the visualisation grid ...
 
 ## TO DO
 
@@ -596,6 +651,9 @@ TODO :
 
  - Canva
  - ReadMe :
+ V1 V2 V3
+ readme globale lien video 
+ et procédure mise en route
  - Vidéo présentation Montage
  - Vidéo mise en place Montage et voice over
 
