@@ -2,11 +2,13 @@ import pandas as pd
 import numpy as np
 import tensorflow as tf
 import os
+import matplotlib.pyplot as plt
 from tensorflow.keras.models import Sequential
 from tensorflow.keras.layers import Dense
 from tensorflow.keras.utils import to_categorical
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+from sklearn.metrics import classification_report, confusion_matrix
 
 # Partie 1 : Lecture et préparation des données
 def load_and_prepare_data(csv_file):
@@ -50,7 +52,34 @@ def train_model(features, labels):
         Dense(output_dim, activation='softmax')
     ])
     model.compile(optimizer='adam', loss='categorical_crossentropy', metrics=['accuracy'])
-    model.fit(features, labels, epochs=10, batch_size=32, validation_split=0.2)
+    
+    # Sauvegarder l'historique de l'entraînement
+    history = model.fit(features, labels, epochs=10, batch_size=32, validation_split=0.2)
+
+    # Visualisation des performances
+    plt.figure(figsize=(12, 5))
+    
+    # Courbe de perte
+    plt.subplot(1, 2, 1)
+    plt.plot(history.history['loss'], label='Train Loss')
+    plt.plot(history.history['val_loss'], label='Validation Loss')
+    plt.title('Loss')
+    plt.xlabel('Epochs')
+    plt.ylabel('Loss')
+    plt.legend()
+    
+    # Courbe de précision
+    plt.subplot(1, 2, 2)
+    plt.plot(history.history['accuracy'], label='Train Accuracy')
+    plt.plot(history.history['val_accuracy'], label='Validation Accuracy')
+    plt.title('Accuracy')
+    plt.xlabel('Epochs')
+    plt.ylabel('Accuracy')
+    plt.legend()
+    
+    plt.tight_layout()
+    plt.show()
+
     return model
 
 # Partie 3 : Conversion en TFLite et exportation pour STM32
@@ -90,10 +119,17 @@ if __name__ == "__main__":
 
     # Charger et préparer les données
     features, labels, class_names = load_and_prepare_data(csv_file)
-    print(f"Classes : {class_names}")
+
+    # Séparer les données en train/test
+    X_train, X_test, y_train, y_test = train_test_split(features, labels, test_size=0.2, random_state=42)
 
     # Entraîner le modèle
-    model = train_model(features, labels)
+    model = train_model(X_train, y_train)
+
+    # Évaluer sur le jeu de test
+    test_loss, test_accuracy = model.evaluate(X_test, y_test)
+    print(f"Test Loss: {test_loss:.4f}")
+    print(f"Test Accuracy: {test_accuracy:.4f}")
 
     # Convertir et exporter
     convert_to_tflite_and_export(model, output_dir)

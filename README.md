@@ -96,3 +96,21 @@ This project aims to activate turn signals (blinkers) for electric unicycles (EU
 └── img
     └── ...
 ```
+
+
+# Vidéos de présentation
+
+[Lien vers la vidéo pitch youtube](url)
+
+[Lien vers la vidéo tutoriel youtube](url)
+
+# Liste des dépendances et pré-requis
+
+- a
+- b
+
+# Procédure de mise en route
+
+- a
+- b
+- n
