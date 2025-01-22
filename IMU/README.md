@@ -69,3 +69,74 @@ mems studio features:
         "F13_MINIMUM_ACC_V",
         "F14_MEAN_ACC_V",
         "F15_ENERGY_GYR_Y"
+
+
+author : Alix Deleule
+
+### List of Features:
+
+1. [ ] TODO
+    1. [ ] GLOBAL - Boîtier / miniaturisation module central
+    2. [ ] GLOBAL - Miniaturisation
+    3. [ ] POWER - Wireless charging
+    4. [ ] BLE - Connection using device name instead of MAC-address
+2. [x] IN PROGRESS
+    - No tasks currently in progress
+3. [x] DONE
+    1. [x] MEMS - Implementation of orientation fusion algorithm
+    2. [x] IMU - Stop blinkers at the end of turn
+    3. [x] MEMS - Data acquisition
+    4. [x] MEMS - Ajout 2e module main et intégration à la solution finale
+    5. [x] MEMS - Hand module w/ battery and automatic pairing
+    6. [x] MEMS - Logger on laptop
+    7. [x] MEMS - GUI Data Visualizer
+4. [x] DROPPED
+    1. [x] MEMS - Logger w/ multiple sensors sending via BLE
+    2. [x] MEMS - Save data as MEMS Studio format
+    3. [X] MEMS - Create decision tree and script to run it on ESP32
+    4. [ ] IMU - Implementation of MFX
+
+
+## Hardware Architecture
+
+### Central Module
+![](img/central_module_diagram.png)
+
+### Hand Module
+![](img/hand_module_diagram.png)
+
+# Software Architecture
+![IMU System Diagram](img/MEMS_system_diagram.png)
+
+# Description de l'algo
+
+```mermaid
+sequenceDiagram
+    participant Alice
+    participant Bob
+    Alice->John: Hello John, how are you?
+    loop Healthcheck
+        John->John: Fight against hypochondria
+    end
+    Note right of John: Rational thoughts <br/>prevail...
+    John-->Alice: Great!
+    John->Bob: How about you?
+    Bob-->John: Jolly good!
+```
+
+# Vidéos de présentation
+
+[Lien vers la vidéo pitch youtube](url)
+
+[Lien vers la vidéo tutoriel youtube](url)
+
+# Liste des dépendances et pré-requis
+
+- a
+- b
+
+# Procédure de mise en route
+
+- a
+- b
+- n

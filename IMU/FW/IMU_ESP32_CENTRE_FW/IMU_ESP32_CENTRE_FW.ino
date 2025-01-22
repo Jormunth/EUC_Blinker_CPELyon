@@ -142,11 +142,17 @@ class MyServerCallbacks: public BLEServerCallbacks {
 class LeftHandCallback : public BLEClientCallbacks {
   void onConnect(BLEClient* pClient) {
     Serial.println("[BLE] Connected to LEFT hand.");
+    lightAllLeds(0,0,255);
+    delay(300);
+    clearStrip();
   }
 
   void onDisconnect(BLEClient* pClient) {
     Serial.println("[BLE] Disconnected from LEFT hand.");
     isBlinkingL = false;
+    lightAllLeds(0,0,255);
+    delay(300);
+    clearStrip();
   }
 };
 
@@ -168,11 +174,17 @@ void leftNotificationCallback(BLERemoteCharacteristic* pCharacteristic, uint8_t*
 class RightHandCallback : public BLEClientCallbacks {
   void onConnect(BLEClient* pClient) {
     Serial.println("[BLE] Connected to RIGHT hand.");
+    lightAllLeds(0,0,255);
+    delay(300);
+    clearStrip();
   }
 
   void onDisconnect(BLEClient* pClient) {
     Serial.println("[BLE] Disconnected from RIGHT hand.");
     isBlinkingR = false;
+    lightAllLeds(0,0,255);
+    delay(300);
+    clearStrip();
   }
 };
 
@@ -244,6 +256,12 @@ bool are_all_below_threshold(float dy_buffer[], float threshold = 2.0) {
 void setup() {
   Serial.begin(115200);
 
+  // configure LED for output
+  pinMode(LED_PIN, OUTPUT);
+
+  strip.begin();            // Initialise le strip NeoPixel
+  strip.show();             // Éteint toutes les LEDs au démarrage
+
   // Initialisation BLE
   BLEDevice::init(BLE_DEVICE_NAME);
   pServer = BLEDevice::createServer();
@@ -281,9 +299,15 @@ void setup() {
   pinMode(INTERRUPT_PIN, INPUT);
   if (mpu.testConnection()) {
     IMUConnected = true;
+    lightAllLeds(0,255,0);
+    delay(300);
+    clearStrip();
     Serial.println("MPU6050 connection successful");
   } else {
     IMUConnected = false;
+    lightAllLeds(255,0,0);
+    delay(300);
+    clearStrip();
     Serial.println("MPU6050 connection failed");
     // while (1);
   }
@@ -335,12 +359,6 @@ void setup() {
     Serial.print(devStatus);
     Serial.println(F(")"));
   }
-
-  // configure LED for output
-  pinMode(LED_PIN, OUTPUT);
-
-  strip.begin();            // Initialise le strip NeoPixel
-  strip.show();             // Éteint toutes les LEDs au démarrage
 
   // Initialisation BLE
   BLEDevice::init(BLE_DEVICE_NAME);
@@ -502,6 +520,20 @@ void animateBlinker(unsigned long currentMillis, bool directionRight) {
   }
 
   // Met à jour l'affichage des LEDs
+  strip.show();
+}
+
+/**
+ * Lights all LEDs to the specified color.
+ * 
+ * @param red   Red component (0-255)
+ * @param green Green component (0-255)
+ * @param blue  Blue component (0-255)
+ */
+void lightAllLeds(uint8_t red, uint8_t green, uint8_t blue) {
+  for (int i = 0; i < NUM_LEDS; i++) {
+    strip.setPixelColor(i, strip.Color(red, green, blue));
+  }
   strip.show();
 }
 
