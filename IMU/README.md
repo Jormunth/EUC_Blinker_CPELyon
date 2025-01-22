@@ -184,18 +184,18 @@ https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/MPU6050
 ## Algorithms descriptions
 
 ### Hand gestures recognition - Peak detection
-We use a buffer to store raw sensor data from the accelerometer and gyroscope over a set period. This allows us to process multiple readings together, helping to detect patterns and trends necessary for gesture recognition. The buffer ensures temporal consistency and efficient processing of the data.
+We use a buffer to store raw accelerometer and gyroscope data over a set period, allowing us to process multiple readings together. This helps in detecting patterns and trends necessary for accurate gesture recognition. The buffer ensures temporal consistency and efficient data processing.
 
-We chose a window size of 52 because the MPU6050 sensor outputs data at 52 Hz, meaning it provides 52 samples per second. A 1-second window (52 samples) captures enough data to recognize all gestures, as post-processing analysis showed that gestures can be identified within this timeframe. This setup ensures accurate and efficient gesture recognition.
+The window size of 52 was chosen because the MPU6050 sensor outputs data at 52 Hz, meaning it provides 52 samples per second. A 1-second window (52 samples) captures sufficient data to recognize all gestures, as post-processing analysis showed that gestures can be effectively identified within this timeframe. This setup enables both accurate and efficient gesture recognition.
 
-Below is the preprocessed data showing that the gestures can be recognized by making a peak detection of the filtered accelerometer norm in a 1second window.
+Using raw accelerometer and gyroscope data logged in CSV files, we conducted post-processing analysis. Below are the results showing that gestures can be recognized by detecting peaks in the filtered accelerometer norm within the 1-second window.
 
 ![](data_processing/peak_detection/img/peak_detection_1_shake.png)
 ![](data_processing/peak_detection/img/peak_detection_stationnary.png)
 ![](data_processing/peak_detection/img/peak_detection_unknown.png)
 ![](data_processing/peak_detection/img/peak_detection_2_shake_left.png)
 
-This last gesture shows that looking at the peaks of accel instead of gyro is more accurate as gyro detects peaks where there should not be any. 
+The last gesture demonstrates that peak detection using the accelerometer norm is more accurate than using gyroscope data, as the gyroscope detects unnecessary peaks that do not correspond to actual gestures.
 
 **Algorithm Flow**
 ```mermaid
@@ -221,7 +221,7 @@ sequenceDiagram
     Logic-->>ESP32: Classification output
 ```
 
-<br><br>
+<br>
 
 **Gesture decision tree :**
 ```mermaid
