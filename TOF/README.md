@@ -1,3 +1,15 @@
+# ToF Solution  
+## System Description  
+The ToF approach uses the `SATEL-VL53L8CX` multi-zone distance sensor to detect hand and arm gestures. This solution provides gesture mapping through an 8x8 or 4x4 zone grid.  
+
+## Features and Progress  
+- **Visualization and Data Archiving**  
+  - Connects via BLE and serial interfaces to archive gesture data in JSON or CSV formats.  
+- **Neural Network Integration**  
+  - Train a neural network to classify gestures (e.g., Left, Right, None).  
+
+
+
 SDA PB7
 SCL PB6
 
