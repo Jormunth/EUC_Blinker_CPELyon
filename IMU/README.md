@@ -11,7 +11,7 @@ Each hand module collects accelerometer and gyroscope data and analyse it for ge
 
 |Hand module|Central Module|Usage illustration|Legend|
 |-|-|-|-|
-| ![](img/hand_module_HW.jpg) | ![](img/central_module_HW.jpg) | ![](img/illustration_imu2.png) | - Red : Hand modules <br> - Orange : Central module <br> - Blue : LED strip used as blinker |
+| ![](img/hand_module_HW.jpg) | ![](img/central_module_HW.jpg) | ![](img/illustration_imu2.png) |🔴Hand modules<br>🟠Central module <br>🔵Blinker |
 
 ### List of Features:
 
