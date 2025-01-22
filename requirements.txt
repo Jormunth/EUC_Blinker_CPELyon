@@ -1,0 +1,13 @@
+asyncio
+bleak
+pandas
+numpy
+tensorflow
+matplotlib
+scikit-learn
+opencv-python
+tk
+ffmpeg-python
+hachoir
+pillow
+pyserial

@@ -57,6 +57,7 @@ This project aims to activate turn signals (blinkers) for electric unicycles (EU
 │   └── vid
 │       └── ...
 ├── README.md
+├── requirements.txt
 ├── TOF
 │   ├── Data_processing
 │   │   ├── Archives_csv
@@ -106,8 +107,10 @@ This project aims to activate turn signals (blinkers) for electric unicycles (EU
 
 # Liste des dépendances et pré-requis
 
-- a
-- b
+- ([ESP32-duino](https://github.com/stm32duino/VL53L8CX/blob/main/examples/VL53L8CX_HelloWorld_I2C/VL53L8CX_HelloWorld_I2C.ino
+))
+- [X-CUBE-TOF1](https://www.st.com/en/ecosystems/x-cube-tof1.html)
+- requirements.txt
 
 # Procédure de mise en route
 
