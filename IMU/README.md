@@ -70,6 +70,96 @@ Each hand module collects accelerometer and gyroscope data and analyse it for ge
 ### Software Architecture
 ![IMU System Diagram](img/MEMS_system_diagram.png)
 
+#### Central module 
+```mermaid
+sequenceDiagram
+    participant User as Utilisateur
+    participant ESP32 as ESP32 (Serveur BLE)
+    participant IMU as MPU6050
+    participant LED as Strip LED
+    participant LeftHand as Main Gauche
+    participant RightHand as Main Droite
+
+    User ->> ESP32: Démarrage du système
+    ESP32 ->> ESP32: Initialisation BLE
+    ESP32 ->> IMU: Initialisation MPU6050
+    alt MPU connecté
+        ESP32 ->> LED: Afficher LED verte
+    else MPU non connecté
+        ESP32 ->> LED: Afficher LED rouge
+    end
+    ESP32 ->> BLE: Activer publicité BLE
+    BLE -->> ESP32: Client connecté
+
+    par Client Main Gauche
+        ESP32 ->> LeftHand: Connexion BLE
+        LeftHand -->> ESP32: Notifications activées
+        ESP32 ->> LED: Indiquer état BLE avec LED
+    and Client Main Droite
+        ESP32 ->> RightHand: Connexion BLE
+        RightHand -->> ESP32: Notifications activées
+        ESP32 ->> LED: Indiquer état BLE avec LED
+    end
+
+    loop Lecture IMU
+        ESP32 ->> IMU: Lire données capteur
+        IMU -->> ESP32: Données brut (accéléro, gyro)
+        ESP32 ->> ESP32: Traitement (fusion capteurs)
+        ESP32 ->> ESP32: Détection de virage
+        alt Virage détecté
+            ESP32 ->> LED: Clignoter LED correspondante
+        end
+    end
+```
+
+
+```mermaid
+sequenceDiagram
+    participant Central as Central Module
+    participant Left as Left Hand Module
+    participant Right as Right Hand Module
+    participant IMULeft as MPU6050 (Left)
+    participant IMURight as MPU6050 (Right)
+    participant LED as LED Strip
+
+    Central ->> Central: Init BLE
+    Central ->> Central: Init MPU6050
+    alt Central MPU Init Success
+        Central ->> Central: Start BLE Advertising
+    else Central MPU Init Fail
+        Central ->> Central: Error LED Feedback
+    end
+
+    par Left Hand Module
+        Left ->> Left: Init BLE
+        Left ->> IMULeft: Init MPU6050
+        alt Left MPU Init Success
+            Left ->> Central: Send Gesture Notifications
+        else Left MPU Init Fail
+            Left ->> Left: Error LED Feedback
+        end
+    and Right Hand Module
+        Right ->> Right: Init BLE
+        Right ->> IMURight: Init MPU6050
+        alt Right MPU Init Success
+            Right ->> Central: Send Gesture Notifications
+        else Right MPU Init Fail
+            Right ->> Right: Error LED Feedback
+        end
+    end
+
+    loop Central Processing
+        Central ->> Central: Process Notifications
+        Central ->> Central: Detect Turn (Angle Threshold)
+        alt Turn Detected
+            Central ->> LED: Activate Blinkers
+        else No Turn Detected
+            Central ->> LED: Turn Off Blinkers
+        end
+    end
+
+```
+
 ## Setup
 
 ### Environment 
@@ -94,6 +184,67 @@ https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/MPU6050
 ## Algorithms descriptions
 
 ### Hand gestures recognition - Peak detection
+We use a buffer to store raw sensor data from the accelerometer and gyroscope over a set period. This allows us to process multiple readings together, helping to detect patterns and trends necessary for gesture recognition. The buffer ensures temporal consistency and efficient processing of the data.
+
+We chose a window size of 52 because the MPU6050 sensor outputs data at 52 Hz, meaning it provides 52 samples per second. A 1-second window (52 samples) captures enough data to recognize all gestures, as post-processing analysis showed that gestures can be identified within this timeframe. This setup ensures accurate and efficient gesture recognition.
+
+Below is the preprocessed data showing that the gestures can be recognized by making a peak detection of the filtered accelerometer norm in a 1second window.
+
+![](data_processing/peak_detection/img/peak_detection_1_shake.png)
+![](data_processing/peak_detection/img/peak_detection_stationnary.png)
+![](data_processing/peak_detection/img/peak_detection_unknown.png)
+![](data_processing/peak_detection/img/peak_detection_2_shake_left.png)
+
+This last gesture shows that looking at the peaks of accel instead of gyro is more accurate as gyro detects peaks where there should not be any. 
+
+**Algorithm Flow**
+```mermaid
+sequenceDiagram
+    participant ESP32 as ESP32 Left Hand Module
+    participant MPU as MPU6050 (IMU)
+    participant Buffers as Data Buffers
+    participant Logic as Gesture Recognition Logic
+
+    Note over ESP32,MPU: Initialization phase
+    ESP32->>MPU: Initialize MPU6050
+    MPU-->>ESP32: IMU Ready
+
+    Note over ESP32,MPU: Main loop for gesture recognition
+    ESP32->>MPU: Fetch raw data (Accel/Gyro)
+    MPU-->>ESP32: Accel (ax, ay, az) & Gyro (gx, gy, gz)
+
+    ESP32->>Buffers: Convert raw data to mg/mdps and store in buffers
+    Buffers->>Logic: Pass buffer data
+
+    Note over Logic: Gesture recognition steps
+    Logic->>Logic: Classify using gesture decision tree
+    Logic-->>ESP32: Classification output
+```
+
+<br><br>
+
+**Gesture decision tree :**
+```mermaid
+flowchart TD
+    Start([Start: Fetch Buffer Data]) --> CalculateNorm[Calculate norms Accel/Gyro]
+    CalculateNorm --> CalculateAccelStd[Compute Standard Deviation Accel Norm]
+
+    CalculateAccelStd -->|Accel Std < ACC_STD_THRESHOLD| CalculateGyroStd[Compute Standard Deviation Gyro Norm]
+    CalculateGyroStd -->|Gyro Std < GYRO_STD_THRESHOLD| NoGesture["Classification: Stationnary"]
+    CalculateGyroStd -->|Gyro Std >= GYRO_STD_THRESHOLD| DefaultClass["Classification: Gesture 3 - unknown gesture"]
+    
+    CalculateAccelStd -->|Accel Std >= ACC_STD_THRESHOLD| ApplyLPF[Apply Low-pass Filter]
+    ApplyLPF --> CountPeaks[Count Peaks in Filtered Accel Norm]
+    
+    CountPeaks -->|Peaks == 0| DefaultClass
+    CountPeaks -->|Peaks == 1| CheckAxAy1[Compare Mean/Peak-to-Peak Ax & Ay]
+    CheckAxAy1 -->|Ax > Ay| Gesture1["Classification: Gesture 1 - chest tap"]
+    CheckAxAy1 -->|Ax <= Ay| DefaultClass
+    
+    CountPeaks -->|Peaks >= 2| CheckAxAy2[Compare Mean/Peak-to-Peak Ay & Ax]
+    CheckAxAy2 -->|Ay > Ax| Gesture2["Classification: Gesture 2 - double shake"]
+    CheckAxAy2 -->|Ay <= Ax| DefaultClass
+```
 
 ### Turn recognition - Peak detection
 
@@ -103,19 +254,6 @@ https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/MPU6050
 
 ### LED strip
 
-```mermaid
-sequenceDiagram
-    participant Alice
-    participant Bob
-    Alice->John: Hello John, how are you?
-    loop Healthcheck
-        John->John: Fight against hypochondria
-    end
-    Note right of John: Rational thoughts <br/>prevail...
-    John-->Alice: Great!
-    John->Bob: How about you?
-    Bob-->John: Jolly good!
-```
 
 ## Explored Alternatives
 
@@ -139,6 +277,11 @@ mems studio features:
         "F15_ENERGY_GYR_Y"
 - raw IMU data streamed over BLE from both hand module to central module then substract central IMU data to keep only relative accel, then detect gesture from that
 - simple led used for blinkers but that was for demo now strip led is better
+
+ MEMS - Logger w/ multiple sensors sending via BLE  
+ MEMS - Save data as MEMS Studio format  
+ MEMS - Create decision tree and script to run it on ESP32  
+
 
 ## List of Dependencies and Prerequisites
 
