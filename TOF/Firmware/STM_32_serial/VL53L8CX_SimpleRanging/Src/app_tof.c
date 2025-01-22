@@ -104,6 +104,7 @@ static void MX_VL53L8CX_SimpleRanging_Init(void)
 {
   /* Initialize Virtual COM Port */
   BSP_COM_Init(COM1);
+  BSP_COM_Init(COM2); 
 
   printf("Sensor initialization...\n");
 
@@ -233,10 +234,10 @@ static void print_result(RANGING_SENSOR_Result_t *Result)
   int8_t k;
   int8_t l;
   uint8_t zones_per_line;
-
   zones_per_line = ((Profile.RangingProfile == RS_PROFILE_8x8_AUTONOMOUS) ||
                     (Profile.RangingProfile == RS_PROFILE_8x8_CONTINUOUS)) ? 8 : 4;
-
+  
+  // Commencez à formater et afficher les résultats
   for (j = 0; j < Result->NumberOfZones; j += zones_per_line)
   {
     for (l = 0; l < RANGING_SENSOR_NB_TARGET_PER_ZONE; l++)
@@ -245,17 +246,26 @@ static void print_result(RANGING_SENSOR_Result_t *Result)
       {
         if ((j + k) < Result->NumberOfZones && Result->ZoneResult[j + k].NumberOfTargets > 0)
         {
-          printf("%ld:%ld,",(long)Result->ZoneResult[j + k].Distance[l], (long)Result->ZoneResult[j + k].Status[l]);
+          printf("%ld:%ld,", (long)Result->ZoneResult[j + k].Distance[l], (long)Result->ZoneResult[j + k].Status[l]);
+          
+          // Envoi des données sur l'UART 2
+          char msg[50];
+          sprintf(msg, "%ld:%ld,", (long)Result->ZoneResult[j + k].Distance[l], (long)Result->ZoneResult[j + k].Status[l]);
+          HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);  // Envoyer sur UART 2
         }
         else
         {
           printf("X:X,");
+          // Envoi de "X:X" sur l'UART 2
+          char msg[5] = "X:X,";
+          HAL_UART_Transmit(&huart2, (uint8_t*)msg, strlen(msg), HAL_MAX_DELAY);
         }
       }
     }
   }
   printf("\n");
 }
+
 
 
 static void toggle_resolution(void)
