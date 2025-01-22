@@ -15,3 +15,5 @@ This project aims to activate turn signals (blinkers) for electric unicycles (EU
     - Employ `MPU-6050` IMU sensors on each hand to recognize gestures.  
     - Send motion data via BLE to a central unit.
     - [IMU report](IMU/)
+
+![](img/nylonove-full-upgrade-set-for-leperkim-lynx.jpg)

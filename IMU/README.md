@@ -7,6 +7,7 @@ The IMU-based system consists of three main components:
 Each hand module collects accelerometer and gyroscope data and sends it via BLE to the central unit, which processes the data and controls the blinkers.
 
 ![IMU System Diagram](img/MEMS_system_diagram.png)
+![IMU System Diagram](img/imu_illustration2.jpg)
 
 ## Features and Progress  
 - **Data Visualization**  
