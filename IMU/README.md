@@ -247,13 +247,170 @@ flowchart TD
 ```
 
 ### Turn recognition - Peak detection
+The turn detection is based on the yaw angle of the MPU6050 sensor, which measures rotation around the vertical axis. Here's an explanation of how the turn detection works:
 
-### BLE connections
+1. **Yaw Angle Monitoring**:
+   - The yaw angle is continuously tracked using data from the MPU6050, which provides the device’s orientation in 3D space. This angle is key to detecting rotations (turns).
+   - The yaw angle is obtained from the Euler angles (`ypr[0]`), which are calculated from quaternion data based on the sensor readings.
+
+2. **Turn Detection Logic**:
+   - **Start Detection**:
+     - The yaw angle (`yaw`) is monitored in the main loop. If the difference between the current yaw angle and the stored yaw angle when the blinker was activated (`startYaw`) exceeds a preset threshold (`TURN_ANGLE_THRESHOLD`), a turn is considered to have started.
+     - The system checks if the yaw change is greater than the threshold (set to 20 degrees in this case), and if so, sets the `isTurning` flag to `true`, indicating a turn is in progress.
+   - **End Detection**:
+     - A buffer of size 15 (`dy_buffer[BUFFER_SIZE]`) is used to track the yaw changes over time. New yaw readings are added to the buffer, and older values are overwritten.
+     - The difference in yaw (between current and previous yaw values) is analyzed to determine if the vehicle has stopped turning. If all values in the buffer fall below 0.05, it’s considered that the vehicle is no longer turning and is moving straight. At this point, the blinker can be canceled.
+
+In summary, the system detects turns by monitoring significant changes in the yaw angle. If the yaw change exceeds a set threshold, the vehicle is flagged as turning. This method ensures reliable turn detection, which is crucial for applications like the turn signal controller for EUC vehicles you're developing.
+
+**Algorithm Flow**
+```mermaid
+sequenceDiagram
+    participant ESP32 as ESP32 Main Module
+    participant MPU as MPU6050 (IMU)
+    participant Buffers as Yaw Buffer
+    participant BlinkerStatus as Blinker Status
+    participant Logic as Turn Recognition Logic
+
+    Note over ESP32,MPU: Initialization phase
+    ESP32->>MPU: Initialize MPU6050
+    MPU-->>ESP32: IMU Ready
+
+    Note over ESP32,MPU: Main loop for turn detection
+    ESP32->>MPU: Fetch raw IMU data
+    MPU-->>ESP32: Accelerometer & Gyroscope values
+
+    ESP32->>BlinkerStatus: Check if blinker was activated
+    Note over BlinkerStatus: if blinker activated
+    BlinkerStatus-->>ESP32: save yaw angle to startYaw
+
+    ESP32->>ESP32: Calculate yaw angle
+    ESP32->>Buffers: Store delta yaw in buffer
+    Buffers-->>Logic: Pass buffer data and current yaw angle
+
+    Note over Logic: Analyze yaw angle and buffer
+    Logic->>Logic: Check for start and end of turn
+    Logic-->>ESP32: Start/Stop turn detection
+```
+
+**Turn detection :**
+```mermaid
+flowchart TD
+    Start([Start: Get Yaw angle and buffer data]) --> CheckTurning[isTurning ?]
+    
+    CheckTurning -->|No| CheckStart[Check Start Turn? 
+    Yaw - startYaw > Threshold]
+
+    CheckTurning -->|Yes| AnalyzeBuffer[Check End Turn?
+     All Buffer Values < 0.05]
+
+    CheckStart -->|Yes| StartTurn["Set isTurning = true"]
+    StartTurn --> AnalyzeBuffer
+
+    AnalyzeBuffer -->|Yes| StopTurn["Set isTurning = false"]
+    StopTurn -->CancelBlinker[Cancel Blinker]
+    AnalyzeBuffer -->|No| ContinueLoop([Continue Monitoring])
+    CheckStart -->|No| ContinueLoop([Continue Monitoring])
+```
 
 ### Battery monitoring
 
+1. **Setup**:
+   - The `batteryPin` (connected to ESP32 pin `D34`) reads the battery voltage.
+   - A voltage divider circuit (4.7 kΩ and 3.3 kΩ resistors) scales down the battery's voltage so it can be safely measured by the ESP32's ADC, which has a maximum input voltage of 3.3V.
+
+2. **Voltage Reading**:
+   - The ESP32's ADC reads a value between 0 and 4095, representing 0V to 3.3V.
+   - The algorithm calculates the actual battery voltage by scaling the ADC value to the 3.3V range and compensating for the voltage divider (hence the multiplication by 2).
+
+3. **Threshold Check**:
+   - The voltage is checked every 3 seconds (`batteryReadInterval = 3000` milliseconds).
+   - If the calculated battery voltage drops below 3.5V, the buzzer pin is activated to alert the user of low battery.
+
+4. **Power Efficiency**:
+   - By sampling the battery voltage every 3 seconds instead of continuously, the algorithm minimizes unnecessary power usage.
+
+---
+
+### Key Calculation:
+- **Voltage Divider Scaling**:
+  - Actual battery voltage = Measured voltage × (4.7 + 3.3) / 3.3 = Measured voltage × 2.
+  - This factor is integrated into the code:  
+    `batteryVoltage = (analogRead(batteryPin) * 3.3) / 4095.0 * 2`.
+
+### Flowchart of the Battery Monitoring Logic:
+
+```mermaid
+flowchart TD
+    Start([Start]) --> CheckEnabled{Battery Monitoring Enabled?}
+    CheckEnabled -->|No| End([Do Nothing])
+    CheckEnabled -->|Yes| CheckInterval{Elapsed Time >= 3s?}
+    CheckInterval -->|No| End
+    CheckInterval -->|Yes| ReadVoltage[Read ADC Value from batteryPin]
+
+    ReadVoltage --> CalculateVoltage[Calculate Voltage: ADC Value * 3.3 / 4095 * 2]
+    CalculateVoltage --> CheckThreshold{Voltage < 3.5V?}
+
+    CheckThreshold -->|No| End
+    CheckThreshold -->|Yes| ActivateBuzzer[Set buzzerPin HIGH]
+    ActivateBuzzer --> End
+```
+
 ### LED strip
 
+1. **330Ω Resistor on D2 to Din**  
+   The 330Ω resistor is used between the D2 pin of the microcontroller and the `Din` of the LED strip to protect the LED strip's data input from potential overcurrent or voltage spikes. This ensures a reliable signal transmission and prevents damage to the LEDs.
+
+2. **LED Colors for Status Indicators**  
+   - **Blue**: The LED strip briefly lights up blue to indicate the connection or disconnection of a BLE client (hand module). This visually confirms BLE status.  
+   - **Red/Green**:  
+     - **Red**: Indicates IMU initialization failure.  
+     - **Green**: Indicates successful IMU initialization.
+
+3. **Blinking Behavior**  
+   - **Activation**: The hand module sends a BLE command (`"2"`), activating the respective blinker (left or right).  
+   - **Deactivation**: The blinker turns off automatically when the end of a turn is detected based on IMU yaw stabilization.
+
+4. **Blinker Animation**  
+   The blinker doesn't just toggle the LEDs on and off. Instead, it uses a smooth, flowing animation along the LED strip to create a dynamic and visually appealing effect.
+
+```mermaid
+graph TD
+    subgraph LED strip
+      Blinkers[Blinkers]
+    end
+
+    subgraph IMU Status
+      IMU_S[IMU Initialization Success] --> G[Green Flash x1]
+      IMU_F[IMU Initialization Failure] --> R[Red Flash x1]
+
+      R --> Blinkers
+      G --> Blinkers
+    end
+
+    subgraph IMU Status
+      BLE_C[BLE Connection] --> B[Blue Flash x1]
+      BLE_D[BLE Disconnection] --> B
+
+      B --> Blinkers
+    end      
+
+    subgraph IMU Status
+      D[Deactivate Blinker]
+      A[Activate Blinker]
+      RH[Right Hand module] -->|BLE Command: 2| A
+      LH[Left Hand module] -->|BLE Command: 2| A
+      
+      A --> O[Orange Blinker Animation]
+      
+      RH --> |BLE Command: 1| D
+      LH --> |BLE Command: 1| D
+      E[End of Turn Detected] --> D
+      D --> O
+
+      O --> Blinkers
+    end
+```
 
 ## Explored Alternatives
 
