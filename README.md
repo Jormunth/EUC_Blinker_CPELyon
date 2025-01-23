@@ -100,9 +100,9 @@ This project aims to activate turn signals (blinkers) for electric unicycles (EU
 
 ## Presentation Videos
 
-[Link to the YouTube pitch video](url)
+[Link to the YouTube pitch video](https://youtube.com/shorts/kZVuSzMemOc?feature=share)
 
-[Link to the YouTube tutorial video](url)
+[Link to the YouTube tutorial video](https://www.youtube.com/watch?v=0yWugvFKKVM)
 
 ## List of Dependencies and Prerequisites
 
@@ -112,6 +112,5 @@ This project aims to activate turn signals (blinkers) for electric unicycles (EU
 
 ## Startup Procedure
 
-- a
-- b
-- n
+- Follow the video guide
+- For python code juste install the requirements.txt and execute them
