@@ -613,47 +613,68 @@ Here are the model that currently work first we got a version 0 with the ESP32 T
 
 ### V1
 
-For the first accurate version we review the data we got from the archive and through the visualisation grid ...
+For the first accurate version we review the data we got from the archive and through the visualisation grid we estimate that certain part of the grid can signify a left arm swing or a right arm so we implement a score system based on the distance values on certain zone of the grid, and throught the test we maximise the efficiency of this method.
 
-## TO DO
+![Grid](img/label_grid.png)
 
-### V2 Implementation
+```cpp
+void print_result(VL53L8CX_ResultsData *Result)
+{
+  // Répartition des zones et points
+  const int left_zones_1pt[] = {7, 15, 23, 31, 39, 47};  // Zones gauche, 1 point
+  const int left_zones_2pt[] = {6, 14, 22, 30, 38, 46};  // Zones gauche, 2 points
+  const int right_zones_1pt[] = {0, 8, 16, 24, 32, 40};  // Zones droite, 1 point
+  const int right_zones_2pt[] = {1, 9, 17, 25, 33, 41};  // Zones droite, 2 points
 
-### V3 avec les range en fonction de la hauteur
+  const int left_1pt_count = sizeof(left_zones_1pt) / sizeof(left_zones_1pt[0]);
+  const int left_2pt_count = sizeof(left_zones_2pt) / sizeof(left_zones_2pt[0]);
+  const int right_1pt_count = sizeof(right_zones_1pt) / sizeof(right_zones_1pt[0]);
+  const int right_2pt_count = sizeof(right_zones_2pt) / sizeof(right_zones_2pt[0]);
 
-4. Implémentation sur STM32
-a) Utilisation de TensorFlow Lite Micro
+  int left_score = 0, right_score = 0;
 
-    Téléchargez TensorFlow Lite for Microcontrollers.
-    Intégrez le modèle quantized_model.tflite dans votre projet STM32 à l’aide de CubeIDE ou d’un environnement similaire.
-    Adaptez le code pour charger le modèle et effectuer des inférences avec vos données en utilisant les exemples fournis par TensorFlow Lite Micro.
+  // Fonction pour ajouter des points si conditions respectées
+  auto add_points = [&](const int zones[], int count, int points, int &score) {
+    for (int i = 0; i < count; i++) {
+      int zone = zones[i];
+      if (Result->nb_target_detected[zone] > 0) {
+        int distance = Result->distance_mm[VL53L8CX_NB_TARGET_PER_ZONE * zone];
+        if (distance >= 400 && distance <= 1200) {  // Conditions de distance
+          score += points;
+        }
+      }
+    }
+  };
 
-b) Exemple de structure
+  // Calcul des scores gauche et droite
+  add_points(left_zones_1pt, left_1pt_count, 10, left_score);
+  add_points(left_zones_2pt, left_2pt_count, 20, left_score);
+  add_points(right_zones_1pt, right_1pt_count, 10, right_score);
+  add_points(right_zones_2pt, right_2pt_count, 20, right_score);
 
-Le fichier .tflite sera compilé et utilisé comme tableau dans le microcontrôleur.
-5. Test et validation
+  // Allumer/éteindre les LEDs selon les scores
+  digitalWrite(LED_LEFT_PIN, (left_score > 60) ? HIGH : LOW);
+  digitalWrite(LED_RIGHT_PIN, (right_score > 60) ? HIGH : LOW);
 
-    Déployez le code sur votre STM32F4.
-    Alimentez le réseau de neurones avec des données en temps réel et validez les prédictions.
-
-[Here's the Result](vid/capteur_tof.mp4)
-
-![How to connect](img/ESP32_branchement.png)
-
-
-```python
-
+  // Affichage pour le débogage
+  SerialPort.print("Score Gauche: ");
+  SerialPort.println(left_score);
+  SerialPort.print("Score Droite: ");
+  SerialPort.println(right_score);
 ```
+[Here's the Result](vid/tof_vid.mp4)
 
+The point method allow a large adaptability while showing significant resul. For the moment it's our most efficient version.
 
+## TODO
 
-TODO : 
+### V2 Implementation
 
- - Canva
- - ReadMe :
- V1 V2 V3
- readme globale lien video 
- et procédure mise en route
- - Vidéo présentation Montage
- - Vidéo mise en place Montage et voice over
+Now that we got our [model](Data_processing\output\model.cc) we can implement it on our F401RE, and see if our neural network work in real cases. 
+
+Using TensorFlow Lite Micro we could integrate the quantized_model.tflite model into our STM32 project using CubeIDE or a similar environment. Adapt the code to load the model and perform inferences with our data , the .tflite file will be compiled and used as an array on the microcontroller.
+
+### V3
+
+After testing our V1 with people with different height and seing how this affect the arm motion and sensor values we think of a version capable to calibrate himself depending on the users.
 
