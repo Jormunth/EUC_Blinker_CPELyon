@@ -332,13 +332,13 @@ flowchart TD
 
 ---
 
-### Key Calculation:
+#### Key Calculation:
 - **Voltage Divider Scaling**:
   - Actual battery voltage = Measured voltage × (4.7 + 3.3) / 3.3 = Measured voltage × 2.
   - This factor is integrated into the code:  
     `batteryVoltage = (analogRead(batteryPin) * 3.3) / 4095.0 * 2`.
 
-### Flowchart of the Battery Monitoring Logic:
+#### Flowchart of the Battery Monitoring Logic:
 
 ```mermaid
 flowchart TD
