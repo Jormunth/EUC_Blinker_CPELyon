@@ -1,7 +1,5 @@
 # IMU Solution  
 
-**Author** : *Alix Deleule*
-
 ## System Description
 The IMU-based system consists of three main components:
 1. A central module (ESP32-WROOM microcontroller and MPU-6050 IMU).  
