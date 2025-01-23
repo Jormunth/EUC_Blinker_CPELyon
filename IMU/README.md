@@ -27,22 +27,22 @@ Each hand module collects accelerometer and gyroscope data and analyse it for ge
 8. [x] BUZZER - Low battery warning and BLE connection/disconnection  
 
 **Central Module**  
-9. [x] IMU - Euler angles acquisition  
-10. [x] IMU - Start turn detection  
-11. [x] IMU - End turn detection  
-12. [x] BLE - Create client and connect to hand module servers to receive specific gesture recognition  
-13. [x] BLE - Automatic connection  
-14. [x] POWER - Power supply decision for rear or headlight via jack port  
-15. [x] POWER - Soldering of jack port and usage of a step-down adapter  
-16. [x] BLINKERS - Initial implementation with 2 simple LEDs  
-17. [x] BLINKERS - Replace simple LEDs with individually addressable RGB LED strip  
-18. [x] BLINKERS - LED strip animations and status colors  
+1.  [x] IMU - Euler angles acquisition  
+2. [x] IMU - Start turn detection  
+3. [x] IMU - End turn detection  
+4. [x] BLE - Create client and connect to hand module servers to receive specific gesture recognition  
+5. [x] BLE - Automatic connection  
+6. [x] POWER - Power supply decision for rear or headlight via jack port  
+7. [x] POWER - Soldering of jack port and usage of a step-down adapter  
+8. [x] BLINKERS - Initial implementation with 2 simple LEDs  
+9. [x] BLINKERS - Replace simple LEDs with individually addressable RGB LED strip  
+10. [x] BLINKERS - LED strip animations and status colors  
 
 **Python Post-Processing**  
-19. [x] LOGGER - BLE scanner and connection scripts  
-20. [x] LOGGER - Logger script  
-21. [x] JUPYTER NOTEBOOK - Use pandas and numpy for algorithm development and offline testing  
-22. [x] VISUALIZER - Live data visualizer connecting via BLE to monitor algorithm output  
+1. [x] LOGGER - BLE scanner and connection scripts  
+2. [x] LOGGER - Logger script  
+3. [x] JUPYTER NOTEBOOK - Use pandas and numpy for algorithm development and offline testing  
+4. [x] VISUALIZER - Live data visualizer connecting via BLE to monitor algorithm output  
 
 #### 2. [x] IN PROGRESS  
 - No tasks currently in progress  
@@ -110,75 +110,6 @@ sequenceDiagram
             ESP32 ->> LED: Clignoter LED correspondante
         end
     end
-```
-
-
-```mermaid
-sequenceDiagram
-    participant Central as Central Module
-    participant Left as Left Hand Module
-    participant Right as Right Hand Module
-    participant IMULeft as MPU6050 (Left)
-    participant IMURight as MPU6050 (Right)
-    participant LED as LED Strip
-
-    Central ->> Central: Init BLE
-    Central ->> Central: Init MPU6050
-    alt Central MPU Init Success
-        Central ->> Central: Start BLE Advertising
-    else Central MPU Init Fail
-        Central ->> Central: Error LED Feedback
-    end
-
-    par Left Hand Module
-        Left ->> Left: Init BLE
-        Left ->> IMULeft: Init MPU6050
-        alt Left MPU Init Success
-            Left ->> Central: Send Gesture Notifications
-        else Left MPU Init Fail
-            Left ->> Left: Error LED Feedback
-        end
-    and Right Hand Module
-        Right ->> Right: Init BLE
-        Right ->> IMURight: Init MPU6050
-        alt Right MPU Init Success
-            Right ->> Central: Send Gesture Notifications
-        else Right MPU Init Fail
-            Right ->> Right: Error LED Feedback
-        end
-    end
-
-    loop Central Processing
-        Central ->> Central: Process Notifications
-        Central ->> Central: Detect Turn (Angle Threshold)
-        alt Turn Detected
-            Central ->> LED: Activate Blinkers
-        else No Turn Detected
-            Central ->> LED: Turn Off Blinkers
-        end
-    end
-
-```
-
-## Setup
-
-### Environment 
-
-#### Arduino IDE setup
-
-Link to add in File > Preferences > Additional boards manager URLs :
-
-```
-https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
-```
-
-Link for downloading MPU6050 library:
-
-Sketch > Include Library > Add .Zip Library
-
-```
-https://minhaskamal.github.io/DownGit/#/home
-https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/MPU6050
 ```
 
 ## Algorithms descriptions
@@ -443,10 +374,29 @@ mems studio features:
 ## List of Dependencies and Prerequisites
 
 - Having an Electric Unicycle ;)
-- Adafruit NeoPixel
-- https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/MPU6050
-- https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/I2Cdev
+- Arduino IDE
+  - Board manager
+    - Link to add in `File > Preferences > Additional` boards manager URLs :
+        ```
+        https://raw.githubusercontent.com/espressif/arduino-esp32/gh-pages/package_esp32_index.json
+        ``` 
+  - Libraries
+    - Adafruit NeoPixel
+    - MPU-6050
+      - Link for downloading MPU6050 library:
+      - `Sketch > Include Library > Add .Zip Library`
+          ```
+          https://minhaskamal.github.io/DownGit/#/home
+          https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/MPU6050
+          https://github.com/jrowberg/i2cdevlib/tree/master/Arduino/I2Cdev
+          ```
 - python libs
+  - bleak
+  - matplotlib
+  - pandas
+  - numpy
+  - PyQt5
+  - scipy
 
 ## Startup Procedure
 
