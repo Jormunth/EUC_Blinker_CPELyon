@@ -345,30 +345,29 @@ graph TD
 
 ## Explored Alternatives
 
-- MEMS Studio decision tree, not the correct sensor, used anyway but led to innaccurate results, however it was inspiring for the features that were analysed for the peak detection
- - Utilisation de MEMS Studio afin de generer un decision tree a partir des donnees IMU, FAILED algo fait main
-mems studio features:
-        "F1_MEAN_ACC_Z",
-        "F2_MINIMUM_ACC_Z",
-        "F3_VARIANCE_ACC_Y",
-        "F4_MEAN_GYR_V",
-        "F5_MAXIMUM_ACC_X",
-        "F6_PEAK_TO_PEAK_ACC_Y",
-        "F7_ENERGY_GYR_Z",
-        "F8_VARIANCE_GYR_Z",
-        "F9_MAXIMUM_ACC_V",
-        "F10_MINIMUM_GYR_X",
-        "F11_MEAN_ACC_X",
-        "F12_VARIANCE_GYR_X",
-        "F13_MINIMUM_ACC_V",
-        "F14_MEAN_ACC_V",
-        "F15_ENERGY_GYR_Y"
-- raw IMU data streamed over BLE from both hand module to central module then substract central IMU data to keep only relative accel, then detect gesture from that
-- simple led used for blinkers but that was for demo now strip led is better
+1. **MEMS Studio Decision Tree Approach**  
+   Initially, MEMS Studio was used to generate a decision tree based on IMU data to classify gestures. However, this approach faced several challenges:  
+   - The sensor selected for testing wasn't ideal, as it was not an STMicroelectronics sensor. MEMS Studio is intended to be used exclusively with STM products, leading to inaccurate results.  
+   - While the decision tree algorithm ultimately failed and had to be replaced with a custom algorithm, it played an important role in inspiring the feature selection for the final peak detection algorithm.  
 
- MEMS - Logger w/ multiple sensors sending via BLE  
- MEMS - Save data as MEMS Studio format  
- MEMS - Create decision tree and script to run it on ESP32  
+   Features analyzed by MEMS Studio included various metrics (e.g., mean, minimum, maximum, variance, peak-to-peak, energy, and median) for both accelerometer and gyroscope data across axes (X, Y, Z) and norms.
+
+2. **Streaming Raw IMU Data Over BLE**  
+   - IMU data was intended to be streamed from the hand modules and the central module via BLE.  
+   - The idea was to subtract the central module's IMU data from the hand module's IMU data to calculate **relative acceleration**, isolating gesture-specific movements.  
+   - Although this approach initially seemed to simplify gesture detection, it was later determined to add computational complexity and BLE latency issues, making it impractical.  
+
+3. **LED Implementation for Blinkers**  
+   - Early demonstrations used simple LEDs for blinkers.  
+   - The final implementation upgraded to LED strips, providing enhanced visual feedback with more sophisticated animations, which greatly improved usability and presentation.  
+
+4. **Additional MEMS Logger and Format Support**  
+   - A MEMS logger with multiple sensors was developed to stream data via BLE.  
+   - The logger saved data in MEMS Studio's format, enabling compatibility and detailed processing.  
+   - A script was created to execute the decision tree on an ESP32 platform, showcasing the flexibility of the setup. However, as mentioned earlier, the MEMS Studio-generated decision tree was eventually replaced with a custom solution.
+
+5. **1S Battery Testing**
+   - 1S batteries were tested for their smaller size and lighter weight compared to 2S batteries. However, their voltage was insufficient to power the ESP32 through its Vin pin.
 
 
 ## List of Dependencies and Prerequisites
