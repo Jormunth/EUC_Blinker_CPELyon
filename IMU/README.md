@@ -190,6 +190,8 @@ The turn detection is based on the yaw angle of the MPU6050 sensor, which measur
      - A buffer of size 15 (`dy_buffer[BUFFER_SIZE]`) is used to track the yaw changes over time. New yaw readings are added to the buffer, and older values are overwritten.
      - The difference in yaw (between current and previous yaw values) is analyzed to determine if the vehicle has stopped turning. If all values in the buffer fall below 0.05, it’s considered that the vehicle is no longer turning and is moving straight. At this point, the blinker can be canceled.
 
+![](data_processing/turn_detection/img/turn_right.png)
+
 In summary, the system detects turns by monitoring significant changes in the yaw angle. If the yaw change exceeds a set threshold, the vehicle is flagged as turning. This method ensures reliable turn detection, which is crucial for applications like the turn signal controller for EUC vehicles you're developing.
 
 **Algorithm Flow**
