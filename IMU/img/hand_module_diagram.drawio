@@ -201,20 +201,6 @@
                         </Array>
                     </mxGeometry>
                 </mxCell>
-                <mxCell id="70" style="edgeStyle=orthogonalEdgeStyle;html=1;endArrow=none;endFill=0;rounded=0;strokeColor=#FF0000;strokeWidth=3;" edge="1" parent="1">
-                    <mxGeometry relative="1" as="geometry">
-                        <mxPoint x="510" y="190" as="targetPoint"/>
-                        <mxPoint x="400" y="190" as="sourcePoint"/>
-                        <Array as="points">
-                            <mxPoint x="420" y="190"/>
-                        </Array>
-                    </mxGeometry>
-                </mxCell>
-                <mxCell id="71" value="5V" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];fontSize=12;fontColor=#FF0000;fontStyle=1" vertex="1" connectable="0" parent="70">
-                    <mxGeometry x="0.4053" y="-2" relative="1" as="geometry">
-                        <mxPoint x="-27" y="-22" as="offset"/>
-                    </mxGeometry>
-                </mxCell>
             </root>
         </mxGraphModel>
     </diagram>
