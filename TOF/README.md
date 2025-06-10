@@ -1,6 +1,6 @@
 # ToF Solution  
 
-authors : Tinaël Delzenne Zamparutti  --  Alix Deleule
+authors : Tinaël Delzenne Zamparutti
 
 ## System Description  
 The ToF approach uses the `SATEL-VL53L8CX` multi-zone distance sensor to detect hand and arm gestures. This solution provides gesture mapping through an 8x8 zone grid.  
