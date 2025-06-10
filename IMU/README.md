@@ -1,4 +1,5 @@
 # IMU Solution  
+Author : DELEULE Alix
 
 ## System Description
 The IMU-based system consists of three main components:
