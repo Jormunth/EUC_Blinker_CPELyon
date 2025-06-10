@@ -7,11 +7,11 @@ This project aims to activate turn signals (blinkers) for electric unicycles (EU
 ### Objectives  
 - Enable blinkers activation through gestures.  
 - Develop and compare two proof-of-concept (POC) solutions using different sensor technologies:  
-  - **IMU (Inertial Measurement Unit)**  made by DELEULE Alix 
+  - **IMU (Inertial Measurement Unit)**  made by **DELEULE Alix**
     - Employ `MPU-6050` IMU sensors on each hand to recognize gestures.  
     - Send motion data via BLE to a central unit.
     - [IMU report](IMU/)
-  - **ToF (Time-of-Flight)**  made by DELZENNE-ZAMPARUTTI Tinaël
+  - **ToF (Time-of-Flight)**  made by **DELZENNE-ZAMPARUTTI Tinaël**
     - Utilize the multi-zone `SATEL-VL53L8CX` sensor for gesture detection via distance mapping.  
     - Provide visualizations of gesture data.  
     - [TOF report](TOF/)
