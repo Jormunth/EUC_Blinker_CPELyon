@@ -404,4 +404,5 @@ graph TD
 
 ## Usage Procedure - Tutorial
 
+[vid/usageTutorial.mp4](vid/usageTutorial.mp4)
 ![](vid/usageTutorial.mp4)
